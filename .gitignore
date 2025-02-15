@@ -1,0 +1,9 @@
+# Git ignore file
+
+.idea/
+TaskService.iml
+TimeTaskTracker.iml
+UserService.iml
+
+*.log
+*.DS_Store
