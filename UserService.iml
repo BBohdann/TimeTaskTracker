@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_21" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+  <component name="SonarLintModuleSettings">
+    <option name="uniqueId" value="c1753f22-0869-4986-9f57-11633623bd3d" />
+  </component>
+</module>

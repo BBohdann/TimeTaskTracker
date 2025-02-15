@@ -1,0 +1,8 @@
+
+u	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(õÿëf8¯¡š„¡2
+j
+java:S1128"HRemove this unused import 'com.example.TaskService.data.entity.Subtask'.(Ú¨ä¸øÿÿÿÿ8²£š„¡2
+h
+java:S1128"KRemove this unused import 'com.example.TaskService.service.dto.SubtaskDto'.(ôÌÓ 8³£š„¡2
+|
+java:S1128	"_Remove this unused import 'com.example.TaskService.service.exception.SubtaskNotFoundException'.(¼§®Ó8´£š„¡2

@@ -1,0 +1,9 @@
+CREATE TABLE users(
+id SERIAL PRIMARY KEY,
+nickname VARCHAR(100) NOT NULL,
+login VARCHAR(30) NOT NULL UNIQUE CHECK(LENGTH(login)>=4 AND LENGTH(login)<=30),
+password VARCHAR(40) NOT NULL,
+email VARCHAR(100) NOT NULL UNIQUE,
+last_updated_time DATE NOT NULL,
+created_time DATE NOT NULL
+);

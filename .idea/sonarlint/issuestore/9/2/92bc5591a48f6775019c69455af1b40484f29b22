@@ -1,0 +1,16 @@
+
+p
+java:S11925"NDefine a constant instead of duplicating this literal "Authorization" 6 times.(„¶•Áüÿÿÿÿ8„æÉÔÏ2
+j
+java:S11925"HDefine a constant instead of duplicating this literal "Bearer " 5 times.(„¶•Áüÿÿÿÿ8†æÉÔÏ2
+v	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(…Ü‚ì8ôÑÏ2
+X	java:S125u"<This block of commented-out lines of code should be removed.(£êù°8ÚôÑÏ2
+Y	java:S125€"<This block of commented-out lines of code should be removed.(û»¹¥8ÛôÑÏ2
+Z
+java:S1128"8Remove this unused import 'jakarta.servlet.http.Cookie'.(Ê‘¡¹úÿÿÿÿ8«õ“ÑÏ2
+M
+java:S1128"0Remove this unused import 'java.util.ArrayList'.(÷‰îƒ8«õ“ÑÏ2
+O
+java:S1128"-Remove this unused import 'java.util.Arrays'.(î–˜Éüÿÿÿÿ8¬õ“ÑÏ2
+M
+java:S1128"+Remove this unused import 'java.util.List'.(Õë±Äøÿÿÿÿ8¬õ“ÑÏ2

@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: bbohdann/user-service-app:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JWT_EXPIRATION
+              value: "31536000000"
+            - name: JWT_SECRET
+              value: "===================================MySecretKey==============================================="
+            - name: PASSWORD_POSTGRES
+              value: "5432"
+            - name: URL_POSTGRES
+              value: "jdbc:postgresql://35.228.229.170:5432/userservicedb"
+            - name: USERNAME_POSTGRES
+              value: "postgres"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+spec:
+  selector:
+    app: user-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080

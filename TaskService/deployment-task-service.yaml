@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: task-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: task-service
+  template:
+    metadata:
+      labels:
+        app: task-service
+    spec:
+      containers:
+        - name: task-service
+          image: bbohdann/task-service-app:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: JWT_SECRET
+              value: "===================================MySecretKey==============================================="
+            - name: PASSWORD_POSTGRES
+              value: "5432"
+            - name: URL_POSTGRES
+              value: "jdbc:postgresql://35.228.229.170:5432/taskservicedb"
+            - name: USERNAME_POSTGRES
+              value: "postgres"
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: task-service
+spec:
+  selector:
+    app: task-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8081
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/subtask(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: task-service
+                port:
+                  number: 80
+          - path: /api/task(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: task-service
+                port:
+                  number: 80
+          - path: /api/auth(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 80
+          - path: /api/user(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 80
+          - path: /task-service/swagger-ui(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: task-service
+                port:
+                  number: 80
+          - path: /task-service/v3/api-docs(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: task-service
+                port:
+                  number: 80
+          - path: /user-service/swagger-ui(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 80
+          - path: /user-service/v3/api-docs(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 80

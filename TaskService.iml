@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="TaskService" external.linked.project.path="$MODULE_DIR$/TaskService" external.root.project.path="$MODULE_DIR$/TaskService" external.system.id="GRADLE" external.system.module.group="com.example" external.system.module.version="0.1" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/TaskService">
+      <excludeFolder url="file://$MODULE_DIR$/TaskService/.gradle" />
+      <excludeFolder url="file://$MODULE_DIR$/TaskService/build" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+  <component name="SonarLintModuleSettings">
+    <option name="uniqueId" value="d889a480-b89f-42b3-afc1-b100c4949821" />
+  </component>
+</module>

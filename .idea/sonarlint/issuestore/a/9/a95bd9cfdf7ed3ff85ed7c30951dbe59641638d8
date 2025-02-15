@@ -1,0 +1,11 @@
+
+{	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(ÚÌ°äúÿÿÿÿ8¬îùÑÏ2
+T
+java:S2387"7"logger" is the name of a field in "GenericFilterBean".(³Ôì8ûîùÑÏ2
+_
+java:S6813"BRemove this field injection and use constructor injection instead.(êæÄŞ8üîùÑÏ2
+_
+java:S6813"BRemove this field injection and use constructor injection instead.(êæÄŞ8üîùÑÏ2
+2
+java:S34577"Not enough arguments.(â©Éˆ8ìÀ­Ğ2
+]	java:S125C"<This block of commented-out lines of code should be removed.(êñ¨õøÿÿÿÿ8…ŸÀ­Ğ2
