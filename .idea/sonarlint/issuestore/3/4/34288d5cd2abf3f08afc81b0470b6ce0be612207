@@ -1,6 +1,0 @@
-
-o	java:S120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(Ç®ç¢
-Y
-java:S5659("CThe JWT signature (JWS) should be verified before using this token.(¿çÄò
-\
-java:S1874*":Remove this use of "SignatureException"; it is deprecated.(‹µ×‡øÿÿÿÿ8ÔØÎ‰2
