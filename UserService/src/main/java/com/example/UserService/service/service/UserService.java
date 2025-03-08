@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -94,5 +95,14 @@ public class UserService implements UserDetailsService {
         User user = userRepository.findByLogin(login).
                 orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + login));
         return UserDetailsImpl.build(user);
+    }
+
+    @Transactional
+    public Map<String, String> getUserNickname(String login) {
+        String nickname = userRepository.findNicknameByLogin(login)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        String.format("Nickname for user with login %s not found", login)
+                ));
+        return Map.of("nickname", nickname);
     }
 }

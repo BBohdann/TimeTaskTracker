@@ -1,12 +1,9 @@
 package com.example.TaskService.service.service;
 
-import com.example.TaskService.data.entity.Subtask;
 import com.example.TaskService.data.entity.Task;
 import com.example.TaskService.data.repository.TaskRepository;
 import com.example.TaskService.service.dto.CreateTaskDto;
-import com.example.TaskService.service.dto.SubtaskDto;
 import com.example.TaskService.service.dto.TaskDto;
-import com.example.TaskService.service.exception.SubtaskNotFoundException;
 import com.example.TaskService.service.exception.TaskNotFoundException;
 import com.example.TaskService.service.mapper.TaskMapper;
 import lombok.RequiredArgsConstructor;
@@ -24,20 +21,26 @@ public class TaskService {
     private final TaskMapper taskMapper;
 
     @Transactional
-    public Long addTask(CreateTaskDto dto) {
+    public TaskDto addTask(CreateTaskDto dto) {
         dto.setCreatedTime(LocalDateTime.now());
-        return taskRepository.save(taskMapper.createTaskToTaskEntity(dto)).getId();
+        Task savedTask = taskRepository.save(taskMapper.createTaskToTaskEntity(dto));
+        return taskMapper.toTaskDto(savedTask);
     }
 
     @Transactional
-    public void updateTimeSpent(TaskDto dto) throws TaskNotFoundException {
+    public TaskDto updateTimeSpent(TaskDto dto) throws TaskNotFoundException {
         if(!taskRepository.existsByTaskIdAndUserId (dto.getId(), dto.getUserId()))
             throw new TaskNotFoundException(dto.getId().toString());
+
         taskRepository.updateTimeSpent(dto.getId(), dto.getTimeSpent());
+        Task updatedTask = taskRepository.findById(dto.getId())
+                .orElseThrow(() -> new TaskNotFoundException("Task with ID " + dto.getId() + " not found after update"));
+
+        return taskMapper.toTaskDto(updatedTask);
     }
 
     @Transactional
-    public void updateTask(TaskDto dto) throws TaskNotFoundException {
+    public TaskDto updateTask(TaskDto dto) throws TaskNotFoundException {
         Task existingTask = taskRepository.findByIdAndUserId(dto.getId(), dto.getUserId())
                 .orElseThrow(() -> new TaskNotFoundException(dto.getId().toString()));
 
@@ -45,9 +48,9 @@ public class TaskService {
         Optional.ofNullable(dto.getDescription()).ifPresent(existingTask::setDescription);
         Optional.ofNullable(dto.getEndTime()).ifPresent(existingTask::setEndTime);
         Optional.ofNullable(dto.getTimeToSpend()).ifPresent(existingTask::setTimeToSpend);
-        Optional.ofNullable(dto.getTimeSpent()).ifPresent(existingTask::setTimeSpent);
+//        Optional.ofNullable(dto.getTimeSpent()).ifPresent(existingTask::setTimeSpent);
         Optional.ofNullable(dto.getIsComplete()).ifPresent(existingTask::setIsComplete);
-        taskRepository.save(existingTask);
+        return taskMapper.toTaskDto(taskRepository.save(existingTask));
     }
 
     @Transactional

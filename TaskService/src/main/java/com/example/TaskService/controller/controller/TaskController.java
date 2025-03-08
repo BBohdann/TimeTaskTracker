@@ -4,6 +4,7 @@ import com.example.TaskService.controller.configuration.jwt.JwtAuthentication;
 import com.example.TaskService.controller.request.CreateTaskRequest;
 import com.example.TaskService.controller.request.UpdateTaskRequest;
 import com.example.TaskService.controller.request.UpdateTimeSpentRequest;
+import com.example.TaskService.controller.responce.TaskBaseResponse;
 import com.example.TaskService.service.dto.TaskDto;
 import com.example.TaskService.service.exception.TaskNotFoundException;
 import com.example.TaskService.service.mapper.TaskMapper;
@@ -19,7 +20,6 @@ import org.springframework.security.web.authentication.rememberme.InvalidCookieE
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -27,7 +27,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.management.InvalidAttributeValueException;
 import java.util.*;
 
 @Slf4j
@@ -44,39 +43,41 @@ public class TaskController {
     @Operation(summary = "Create a new task", description = "Allows the user to create a new task. The Authorization header should contain the Bearer token.")
     @PostMapping("/createTask")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Long> addTask(@Valid @RequestBody CreateTaskRequest taskRequest,
-                                        HttpServletRequest request) {
+    public ResponseEntity<TaskBaseResponse> addTask(@Valid @RequestBody CreateTaskRequest taskRequest,
+                                                    HttpServletRequest request) {
+        TaskDto taskDto = taskService.addTask(taskMapper.taskRequestToDto(taskRequest, getUserIdFromAuth()));
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .header("Authorization", "Bearer " + getToken(request))
-                .body(taskService.addTask(taskMapper.taskRequestToDto(taskRequest, getUserIdFromAuth())));
+                .body(taskMapper.toTaskBaseResponse(taskDto));
     }
 
     @Operation(summary = "Update time spent on a task", description = "Updates the time spent on a specific task. The Authorization header should contain the Bearer token.")
     @PostMapping("/updateSpentTime")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> updateSpentTime(@Valid @RequestBody UpdateTimeSpentRequest taskRequest,
-                                                HttpServletRequest request) throws TaskNotFoundException {
+    public ResponseEntity<TaskDto> updateSpentTime(@Valid @RequestBody UpdateTimeSpentRequest taskRequest,
+                                                   HttpServletRequest request) throws TaskNotFoundException {
         TaskDto dto = new TaskDto();
         dto.setId(taskRequest.getId());
         dto.setTimeSpent(taskRequest.getTimeSpent());
         dto.setUserId(getUserIdFromAuth());
-        taskService.updateTimeSpent(dto);
+        TaskDto updatedTask = taskService.updateTimeSpent(dto);
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .header("Authorization", "Bearer " + getToken(request))
-                .build();
+                .body(updatedTask);
     }
 
     @Operation(summary = "Update task", description = "Allows the user to update task information. The Authorization header should contain the Bearer token.")
     @PostMapping("/updateTask")
     @PreAuthorize("isAuthenticated()")
-    @ResponseStatus(HttpStatus.OK)
-    public void updateTask(@Valid @RequestBody UpdateTaskRequest updateTaskRequest,
-                           HttpServletRequest request,
-                           HttpServletResponse response) throws TaskNotFoundException {
-        taskService.updateTask(taskMapper.updateTaskRequestToTaskDto(updateTaskRequest, getUserIdFromAuth()));
-        response.addHeader("Authorization", "Bearer " + getToken(request));
+    public ResponseEntity<TaskDto> updateTask(@Valid @RequestBody UpdateTaskRequest updateTaskRequest,
+                           HttpServletRequest request) throws TaskNotFoundException {
+        TaskDto updatedTask = taskService.updateTask(taskMapper.updateTaskRequestToTaskDto(updateTaskRequest, getUserIdFromAuth()));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .header("Authorization", "Bearer " + getToken(request))
+                .body(updatedTask);
     }
 
     @Operation(summary = "Delete a task", description = "Deletes a task by its ID. The Authorization header should contain the Bearer token.")
@@ -117,8 +118,7 @@ public class TaskController {
     @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<TaskDto> getTask(@RequestParam @NotNull String id,
-                                           HttpServletRequest request,
-                                           HttpServletResponse response) throws TaskNotFoundException {
+                                           HttpServletRequest request) throws TaskNotFoundException {
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .header("Authorization", "Bearer " + getToken(request))

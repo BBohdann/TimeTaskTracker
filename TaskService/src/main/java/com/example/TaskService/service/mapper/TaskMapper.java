@@ -2,15 +2,17 @@ package com.example.TaskService.service.mapper;
 
 import com.example.TaskService.controller.request.CreateTaskRequest;
 import com.example.TaskService.controller.request.UpdateTaskRequest;
+import com.example.TaskService.controller.responce.TaskBaseResponse;
 import com.example.TaskService.data.entity.Task;
 import com.example.TaskService.service.dto.CreateTaskDto;
-import com.example.TaskService.service.dto.SubtaskDto;
 import com.example.TaskService.service.dto.SubtaskMainInfoDto;
 import com.example.TaskService.service.dto.TaskDto;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -18,7 +20,6 @@ public class TaskMapper {
     public TaskDto toTaskDto(Task entity){
         TaskDto dto = new TaskDto();
         dto.setId(entity.getId());
-        dto.setUserId(entity.getUserId());
         dto.setTaskName(entity.getTaskName());
         dto.setCreatedTime(entity.getCreatedTime());
         dto.setEndTime(entity.getEndTime());
@@ -27,7 +28,9 @@ public class TaskMapper {
         dto.setTimeSpent(entity.getTimeSpent());
         dto.setIsComplete(entity.getIsComplete());
 
-        List<SubtaskMainInfoDto> subtaskDtos = entity.getSubtasks().stream()
+        List<SubtaskMainInfoDto> subtaskDtos = Optional.ofNullable(entity.getSubtasks())
+                .orElse(Collections.emptyList())
+                .stream()
                 .map(subtask -> {
                     SubtaskMainInfoDto subtaskDto = new SubtaskMainInfoDto();
                     subtaskDto.setId(subtask.getId());
@@ -83,15 +86,16 @@ public class TaskMapper {
         return entity;
     }
 
-    public Task toTaskEntity(TaskDto dto){
-        Task entity = new Task();
-        entity.setId(dto.getId());
-        entity.setUserId(dto.getUserId());
-        entity.setTaskName(dto.getTaskName());
-        entity.setEndTime(dto.getEndTime());
-        entity.setDescription(dto.getDescription());
-        entity.setTimeToSpend(dto.getTimeToSpend());
-        entity.setTimeSpent(dto.getTimeSpent());
-        return entity;
+    public TaskBaseResponse toTaskBaseResponse(TaskDto dto) {
+        TaskBaseResponse responce = new TaskBaseResponse();
+        responce.setId(dto.getId());
+        responce.setTaskName(dto.getTaskName());
+        responce.setCreatedTime(dto.getCreatedTime());
+        responce.setEndTime(dto.getEndTime());
+        responce.setDescription(dto.getDescription());
+        responce.setTimeToSpend(dto.getTimeToSpend());
+        responce.setTimeSpent(dto.getTimeSpent());
+        responce.setIsComplete(dto.getIsComplete());
+        return responce;
     }
 }
