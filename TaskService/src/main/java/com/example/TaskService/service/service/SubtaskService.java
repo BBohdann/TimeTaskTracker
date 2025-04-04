@@ -49,7 +49,9 @@ public class SubtaskService {
         subtaskRepository.updateTimeSpent(dto.getId(), dto.getTimeSpent());
 
         Long taskId = subtaskRepository.findTaskIdBySubtaskId(dto.getId())
-                .orElseThrow(() -> new TaskNotFoundException(dto.getTaskId().toString()));
+                .orElseThrow(() -> new TaskNotFoundException(
+                        dto.getTaskId() != null ? dto.getTaskId().toString() : "Unknown Task ID"
+                ));
 
         taskRepository.updateTimeSpent(taskId, dto.getTimeSpent());
     }

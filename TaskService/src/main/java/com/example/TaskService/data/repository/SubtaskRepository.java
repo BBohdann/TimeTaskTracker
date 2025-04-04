@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,8 +26,9 @@ public interface SubtaskRepository extends JpaRepository<Subtask, Long> {
     @Query("UPDATE Subtask s SET s.timeSpent = s.timeSpent + :timeSpent WHERE s.id = :id")
     void updateTimeSpent(@Param("id") Long id, @Param("timeSpent") Integer timeSpent);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE Subtask s SET s.isComplete = CASE WHEN s.isComplete = true THEN false ELSE true END WHERE s.id = :subtaskId")
+    @Transactional
     int changeIsCompleteFlag(@Param("subtaskId") Long subtaskId);
 
 }
