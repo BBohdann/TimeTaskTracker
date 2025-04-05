@@ -19,6 +19,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class SubtaskService {
+
     private final SubtaskRepository subtaskRepository;
     private final SubtaskMapper subtaskMapper;
     private final TaskRepository taskRepository;
@@ -28,58 +29,67 @@ public class SubtaskService {
     }
 
     public SubtaskDto getSubtaskById(Long id) throws SubtaskNotFoundException {
-        Subtask subtask = subtaskRepository.findById(id)
-                .orElseThrow(() -> new SubtaskNotFoundException(id.toString()));
+        Subtask subtask = findSubtaskByIdOrThrow(id);
         return subtaskMapper.entityToSubtaskDto(subtask);
     }
 
     @Transactional
-    public SubtaskDto addSubtask(CreateSubtaskDto subtask) throws TaskNotFoundException {
-        if (!taskRepository.existsById(subtask.getTaskId()))
-            throw new TaskNotFoundException(subtask.getTaskId().toString());
-        subtask.setCreatedTime(LocalDateTime.now());
-        Subtask entity = subtaskMapper.createSubtaskDtoToEntity(subtask);
-        return subtaskMapper.entityToSubtaskDto(subtaskRepository.save(entity));
+    public SubtaskDto addSubtask(CreateSubtaskDto dto) throws TaskNotFoundException {
+        validateTaskExistence(dto.getTaskId());
+
+        dto.setCreatedTime(LocalDateTime.now());
+        Subtask saved = subtaskRepository.save(subtaskMapper.createSubtaskDtoToEntity(dto));
+        return subtaskMapper.entityToSubtaskDto(saved);
     }
 
     @Transactional
-    public void updateSubtaskTimeSpent(SubtaskDto dto) throws SubtaskNotFoundException, TaskNotFoundException {
-        if (!subtaskRepository.existsById(dto.getId()))
-            throw new SubtaskNotFoundException(dto.getId().toString());
+    public void updateSubtaskTimeSpent(SubtaskDto dto) throws TaskNotFoundException, SubtaskNotFoundException {
+        findSubtaskByIdOrThrow(dto.getId());
+
         subtaskRepository.updateTimeSpent(dto.getId(), dto.getTimeSpent());
 
         Long taskId = subtaskRepository.findTaskIdBySubtaskId(dto.getId())
                 .orElseThrow(() -> new TaskNotFoundException(
-                        dto.getTaskId() != null ? dto.getTaskId().toString() : "Unknown Task ID"
-                ));
+                        Optional.ofNullable(dto.getTaskId()).map(Object::toString).orElse("Unknown Task ID")));
 
         taskRepository.updateTimeSpent(taskId, dto.getTimeSpent());
     }
 
     @Transactional
     public void changeIsCompleteFlag(Long subtaskId) throws SubtaskNotFoundException {
-        Optional.of(subtaskRepository.changeIsCompleteFlag(subtaskId))
-                .filter(updatedRows -> updatedRows > 0)
-                .orElseThrow(() -> new SubtaskNotFoundException(subtaskId.toString()));
+        int updated = subtaskRepository.changeIsCompleteFlag(subtaskId);
+        if (updated == 0) {
+            throw new SubtaskNotFoundException(subtaskId.toString());
+        }
     }
 
     @Transactional
-    public void updateSubtask(SubtaskDto dto) throws TaskNotFoundException {
-        Subtask existingTask = subtaskRepository.findById(dto.getId())
-                .orElseThrow(() -> new TaskNotFoundException(dto.getId().toString()));
+    public void updateSubtask(SubtaskDto dto) throws SubtaskNotFoundException {
+        Subtask existing = findSubtaskByIdOrThrow(dto.getId());
 
-        Optional.ofNullable(dto.getSubtaskName()).ifPresent(existingTask::setSubtaskName);
-        Optional.ofNullable(dto.getDescription()).ifPresent(existingTask::setDescription);
-        Optional.ofNullable(dto.getEndTime()).ifPresent(existingTask::setEndTime);
-        Optional.ofNullable(dto.getTimeToSpend()).ifPresent(existingTask::setTimeToSpend);
-        Optional.ofNullable(dto.getIsComplete()).ifPresent(existingTask::setIsComplete);
-        subtaskRepository.save(existingTask);
+        Optional.ofNullable(dto.getSubtaskName()).ifPresent(existing::setSubtaskName);
+        Optional.ofNullable(dto.getDescription()).ifPresent(existing::setDescription);
+        Optional.ofNullable(dto.getEndTime()).ifPresent(existing::setEndTime);
+        Optional.ofNullable(dto.getTimeToSpend()).ifPresent(existing::setTimeToSpend);
+        Optional.ofNullable(dto.getIsComplete()).ifPresent(existing::setIsComplete);
+
+        subtaskRepository.save(existing);
     }
 
     @Transactional
     public void deleteSubtask(Long id) throws SubtaskNotFoundException {
-        if (!subtaskRepository.existsById(id))
-            throw new SubtaskNotFoundException(id.toString());
+        findSubtaskByIdOrThrow(id);
         subtaskRepository.deleteById(id);
+    }
+
+    private void validateTaskExistence(Long taskId) throws TaskNotFoundException {
+        if (!taskRepository.existsById(taskId)) {
+            throw new TaskNotFoundException("Task with ID " + taskId + " not found");
+        }
+    }
+
+    private Subtask findSubtaskByIdOrThrow(Long id) throws SubtaskNotFoundException {
+        return subtaskRepository.findById(id)
+                .orElseThrow(() -> new SubtaskNotFoundException("Subtask with ID " + id + " not found"));
     }
 }

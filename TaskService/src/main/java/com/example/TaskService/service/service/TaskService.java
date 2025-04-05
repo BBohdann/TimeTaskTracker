@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,50 +28,55 @@ public class TaskService {
 
     @Transactional
     public TaskDto updateTimeSpent(TaskDto dto) throws TaskNotFoundException {
-        if(!taskRepository.existsByTaskIdAndUserId (dto.getId(), dto.getUserId()))
-            throw new TaskNotFoundException(dto.getId().toString());
-
+        validateTaskExistence(dto.getId(), dto.getUserId());
         taskRepository.updateTimeSpent(dto.getId(), dto.getTimeSpent());
-        Task updatedTask = taskRepository.findById(dto.getId())
-                .orElseThrow(() -> new TaskNotFoundException("Task with ID " + dto.getId() + " not found after update"));
-
-        return taskMapper.toTaskDto(updatedTask);
+        return fetchTaskDtoById(dto.getId());
     }
 
     @Transactional
     public TaskDto updateTask(TaskDto dto) throws TaskNotFoundException {
-        Task existingTask = taskRepository.findByIdAndUserId(dto.getId(), dto.getUserId())
-                .orElseThrow(() -> new TaskNotFoundException(dto.getId().toString()));
-
-        Optional.ofNullable(dto.getTaskName()).ifPresent(existingTask::setTaskName);
-        Optional.ofNullable(dto.getDescription()).ifPresent(existingTask::setDescription);
-        Optional.ofNullable(dto.getEndTime()).ifPresent(existingTask::setEndTime);
-        Optional.ofNullable(dto.getTimeToSpend()).ifPresent(existingTask::setTimeToSpend);
-//        Optional.ofNullable(dto.getTimeSpent()).ifPresent(existingTask::setTimeSpent);
-        Optional.ofNullable(dto.getIsComplete()).ifPresent(existingTask::setIsComplete);
+        Task existingTask = validateTaskExistence(dto.getId(), dto.getUserId());
+        updateTaskFields(existingTask, dto);
         return taskMapper.toTaskDto(taskRepository.save(existingTask));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Task> getTasksByUserId(Long userId) {
         return taskRepository.findTasksByUserId(userId);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Task> getActiveTasksByUserId(Long userId) {
         return taskRepository.findActiveTasksByUserId(userId);
     }
 
+    @Transactional(readOnly = true)
     public TaskDto getTaskById(Long id) throws TaskNotFoundException {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException(id.toString()));
-        return taskMapper.toTaskDto(task);
+        return fetchTaskDtoById(id);
     }
 
     @Transactional
     public void deleteTask(Long id, Long userId) throws TaskNotFoundException {
-        if(!taskRepository.existsByTaskIdAndUserId(id, userId))
-            throw new TaskNotFoundException(id.toString());
+        validateTaskExistence(id, userId);
         taskRepository.deleteById(id);
+    }
+
+    private Task validateTaskExistence(Long taskId, Long userId) throws TaskNotFoundException {
+        return taskRepository.findByIdAndUserId(taskId, userId)
+                .orElseThrow(() -> new TaskNotFoundException("Task with ID " + taskId + " not found"));
+    }
+
+    private TaskDto fetchTaskDtoById(Long taskId) throws TaskNotFoundException {
+        return taskRepository.findById(taskId)
+                .map(taskMapper::toTaskDto)
+                .orElseThrow(() -> new TaskNotFoundException("Task with ID " + taskId + " not found"));
+    }
+
+    private void updateTaskFields(Task existingTask, TaskDto dto) {
+        if (dto.getTaskName() != null) existingTask.setTaskName(dto.getTaskName());
+        if (dto.getDescription() != null) existingTask.setDescription(dto.getDescription());
+        if (dto.getEndTime() != null) existingTask.setEndTime(dto.getEndTime());
+        if (dto.getTimeToSpend() != null) existingTask.setTimeToSpend(dto.getTimeToSpend());
+        if (dto.getIsComplete() != null) existingTask.setIsComplete(dto.getIsComplete());
     }
 }

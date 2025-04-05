@@ -59,8 +59,12 @@ class TaskServiceTest {
         dto.setUserId(1L);
         dto.setTimeSpent(5);
 
-        when(taskRepository.existsByTaskIdAndUserId(dto.getId(), dto.getUserId())).thenReturn(true);
-        when(taskRepository.findById(dto.getId())).thenReturn(Optional.of(new Task()));
+        Task mockTask = new Task();
+        mockTask.setId(1L);
+        mockTask.setUserId(1L);
+
+        when(taskRepository.findByIdAndUserId(dto.getId(), dto.getUserId())).thenReturn(Optional.of(mockTask));
+        when(taskRepository.findById(dto.getId())).thenReturn(Optional.of(mockTask));
 
         TaskDto result = taskService.updateTimeSpent(dto);
 
@@ -161,7 +165,11 @@ class TaskServiceTest {
 
     @Test
     void deleteTask_Success() throws TaskNotFoundException {
-        when(taskRepository.existsByTaskIdAndUserId(1L, 1L)).thenReturn(true);
+        Task mockTask = new Task();
+        mockTask.setId(1L);
+        mockTask.setUserId(1L);
+
+        when(taskRepository.findByIdAndUserId(1L, 1L)).thenReturn(Optional.of(mockTask));
 
         taskService.deleteTask(1L, 1L);
 

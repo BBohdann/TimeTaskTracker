@@ -6,28 +6,21 @@ import com.example.UserService.controller.request.SignupRequest;
 import com.example.UserService.service.exception.EmailAlreadyExistException;
 import com.example.UserService.service.exception.UserAlreadyExistException;
 import com.example.UserService.service.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -37,6 +30,7 @@ import java.util.Map;
 @RequestMapping("api/auth")
 @Tag(name = "Authentication", description = "Endpoints for user authentication")
 public class AuthController {
+
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final TokenUtils jwtUtils;
@@ -50,17 +44,20 @@ public class AuthController {
             @ApiResponse(responseCode = "202", description = "Successfully authenticated, token returned in headers"),
             @ApiResponse(responseCode = "401", description = "Invalid credentials")
     })
-    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(
-                        loginRequest.getLogin(), loginRequest.getPassword()));
+    public ResponseEntity<Map<String, String>> authenticateUser(@RequestBody @Valid LoginRequest loginRequest) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getLogin(), loginRequest.getPassword()
+                )
+        );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
+        Map<String, String> nickname = userService.getUserNickname(authentication.getName());
 
         return ResponseEntity.accepted()
                 .header("Authorization", "Bearer " + jwt)
-                .body(userService.getUserNickname(authentication.getName()));
+                .body(nickname);
     }
 
     @PostMapping("/register")
@@ -73,10 +70,16 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid request data"),
             @ApiResponse(responseCode = "409", description = "User with the given login or email already exists")
     })
-    public ResponseEntity<?> registerUser(@RequestBody SignupRequest signUpRequest)
+    public ResponseEntity<Void> registerUser(@RequestBody @Valid SignupRequest request)
             throws UserAlreadyExistException, EmailAlreadyExistException {
-        userService.registerUser(signUpRequest.getLogin(),
-                signUpRequest.getPassword(), signUpRequest.getEmail(), signUpRequest.getNickname());
+
+        userService.registerUser(
+                request.getLogin(),
+                request.getPassword(),
+                request.getEmail(),
+                request.getNickname()
+        );
+
         return ResponseEntity.accepted().build();
     }
 }

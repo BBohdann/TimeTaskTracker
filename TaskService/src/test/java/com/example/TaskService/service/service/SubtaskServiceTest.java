@@ -113,6 +113,7 @@ class SubtaskServiceTest {
         dto.setTimeSpent(5);
 
         when(subtaskRepository.existsById(1L)).thenReturn(true);
+        when(subtaskRepository.findById(1L)).thenReturn(Optional.of(new Subtask()));
         when(subtaskRepository.findTaskIdBySubtaskId(1L)).thenReturn(Optional.of(1L));
 
         subtaskService.updateSubtaskTimeSpent(dto);
@@ -144,7 +145,7 @@ class SubtaskServiceTest {
         when(subtaskRepository.existsById(1L)).thenReturn(true);
         when(subtaskRepository.findTaskIdBySubtaskId(1L)).thenReturn(Optional.empty());
 
-        assertThrows(TaskNotFoundException.class, () -> subtaskService.updateSubtaskTimeSpent(dto));
+        assertThrows(SubtaskNotFoundException.class, () -> subtaskService.updateSubtaskTimeSpent(dto));
     }
 
     @Test
@@ -166,7 +167,7 @@ class SubtaskServiceTest {
     }
 
     @Test
-    void updateSubtask_Success() throws TaskNotFoundException {
+    void updateSubtask_Success() throws TaskNotFoundException, SubtaskNotFoundException {
         SubtaskDto dto = new SubtaskDto();
         dto.setId(1L);
         dto.setSubtaskName("Updated Subtask");
@@ -192,7 +193,7 @@ class SubtaskServiceTest {
 
         when(subtaskRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(TaskNotFoundException.class, () -> subtaskService.updateSubtask(dto));
+        assertThrows(SubtaskNotFoundException.class, () -> subtaskService.updateSubtask(dto));
 
         verify(subtaskRepository, never()).save(any(Subtask.class));
     }
@@ -200,6 +201,7 @@ class SubtaskServiceTest {
     @Test
     void deleteSubtask_Success() throws SubtaskNotFoundException {
         when(subtaskRepository.existsById(1L)).thenReturn(true);
+        when(subtaskRepository.findById(1L)).thenReturn(Optional.of(new Subtask()));
 
         subtaskService.deleteSubtask(1L);
 

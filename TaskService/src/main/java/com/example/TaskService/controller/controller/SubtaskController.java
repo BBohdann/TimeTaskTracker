@@ -76,7 +76,7 @@ public class SubtaskController {
     @ResponseStatus(HttpStatus.OK)
     public void updateTask(@Valid @RequestBody UpdateSubtaskRequest updateSubtaskRequest,
                            HttpServletRequest request,
-                           HttpServletResponse response) throws TaskNotFoundException {
+                           HttpServletResponse response) throws TaskNotFoundException, SubtaskNotFoundException {
         subtaskService.updateSubtask(subtaskMapper.updateSubtaskRequestToSubtaskDto(updateSubtaskRequest));
         response.addHeader("Authorization", "Bearer " + getToken(request));
     }
@@ -112,33 +112,3 @@ public class SubtaskController {
         return token.get();
     }
 }
-
-
-//private static String getCookieToken(HttpServletRequest request) {
-//    Optional<String> cookieValue = Arrays.stream(request.getCookies())
-//            .filter(cookie -> "json-token".equals(cookie.getName()))
-//            .map(Cookie::getValue)
-//            .findFirst();
-//    if (cookieValue.isEmpty()) {
-//        throw new InvalidCookieException("Cookie with name = json-token is empty");
-//    }
-//    return cookieValue.get();
-//}
-
-//private String generateCookieHeader(String name, String value, String path, boolean httpOnly, boolean secure, String sameSite) {
-//    List<String> attributes = new ArrayList<>();
-//    attributes.add(String.format("%s=%s", name, value));
-//    if (path != null) {
-//        attributes.add(String.format("Path=%s", path));
-//    }
-//    if (httpOnly) {
-//        attributes.add("HttpOnly");
-//    }
-//    if (secure) {
-//        attributes.add("Secure");
-//    }
-//    if (sameSite != null) {
-//        attributes.add(String.format("SameSite=%s", sameSite));
-//    }
-//    return String.join("; ", attributes);
-//}
