@@ -30,7 +30,6 @@ Built with **Java + Spring Boot** and deployed to **Google Cloud** using **Docke
 ---
 
 ## Getting Started (Optional)
-
 Clone and run locally (The APIs are deployed live (see links above), but you can also run the project locally if needed):
 ```bash
 git clone https://github.com/BBohdann/TimeTaskTracker.git
