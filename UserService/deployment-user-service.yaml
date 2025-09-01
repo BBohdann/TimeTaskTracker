@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: bbohdann/user-service-app:latest
+          image: bbohdann/user-service-app:1.8
           ports:
             - containerPort: 8080
           env:
@@ -23,9 +23,9 @@ spec:
             - name: JWT_SECRET
               value: "===================================MySecretKey==============================================="
             - name: PASSWORD_POSTGRES
-              value: "5432"
+              value: "Db-123456"
             - name: URL_POSTGRES
-              value: "jdbc:postgresql://35.228.229.170:5432/userservicedb"
+              value: "jdbc:postgresql://34.88.53.56:5432/userservicedb"
             - name: USERNAME_POSTGRES
               value: "postgres"
       tolerations:

@@ -24,7 +24,6 @@ CREATE TABLE subtasks (
     FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
 );
 
--- Функція для автоматичного встановлення флажка завершення для задач
 CREATE OR REPLACE FUNCTION update_is_complete_task() RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.time_spent >= NEW.time_to_spend THEN
@@ -34,13 +33,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Тригер для таблиці tasks
 CREATE TRIGGER set_is_complete_task
 BEFORE INSERT OR UPDATE ON tasks
 FOR EACH ROW
 EXECUTE FUNCTION update_is_complete_task();
 
--- Функція для автоматичного встановлення флажка завершення для підзадач
 CREATE OR REPLACE FUNCTION update_is_complete_subtask() RETURNS TRIGGER AS $$
 BEGIN
     IF NEW.time_spent >= NEW.time_to_spend THEN
@@ -50,7 +47,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Тригер для таблиці subtasks
 CREATE TRIGGER set_is_complete_subtask
 BEFORE INSERT OR UPDATE ON subtasks
 FOR EACH ROW

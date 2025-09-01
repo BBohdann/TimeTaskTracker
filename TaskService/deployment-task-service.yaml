@@ -14,23 +14,22 @@ spec:
     spec:
       containers:
         - name: task-service
-          image: bbohdann/task-service-app:latest
+          image: bbohdann/task-service-app:1.6
           ports:
             - containerPort: 8081
           env:
             - name: JWT_SECRET
               value: "===================================MySecretKey==============================================="
             - name: PASSWORD_POSTGRES
-              value: "5432"
+              value: "Db-123456"
             - name: URL_POSTGRES
-              value: "jdbc:postgresql://35.228.229.170:5432/taskservicedb"
+              value: "jdbc:postgresql://34.88.53.56:5432/taskservicedb"
             - name: USERNAME_POSTGRES
               value: "postgres"
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-
 
 ---
 apiVersion: v1
@@ -51,64 +50,74 @@ kind: Ingress
 metadata:
   name: my-ingress
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.netlify.app, https://*.github.io"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "*"
+    nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length, Content-Range, Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - timetracker.pp.ua
+      secretName: myapp-tls
   rules:
-    - http:
+    - host: timetracker.pp.ua
+      http:
         paths:
-          - path: /api/subtask(/|$)(.*)
+          - path: /api/subtask
             pathType: ImplementationSpecific
             backend:
               service:
                 name: task-service
                 port:
                   number: 80
-          - path: /api/task(/|$)(.*)
+          - path: /api/task
             pathType: ImplementationSpecific
             backend:
               service:
                 name: task-service
                 port:
                   number: 80
-          - path: /api/auth(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: user-service
-                port:
-                  number: 80
-          - path: /api/user(/|$)(.*)
+          - path: /api/auth
             pathType: ImplementationSpecific
             backend:
               service:
                 name: user-service
                 port:
                   number: 80
-          - path: /task-service/swagger-ui(/|$)(.*)
-            pathType: Prefix
-            backend:
-              service:
-                name: task-service
-                port:
-                  number: 80
-          - path: /task-service/v3/api-docs(/|$)(.*)
-            pathType: Prefix
-            backend:
-              service:
-                name: task-service
-                port:
-                  number: 80
-          - path: /user-service/swagger-ui(/|$)(.*)
-            pathType: Prefix
+          - path: /api/user
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: user-service
                 port:
                   number: 80
-          - path: /user-service/v3/api-docs(/|$)(.*)
-            pathType: Prefix
+          - path: /task-service/swagger-ui
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: task-service
+                port:
+                  number: 80
+          - path: /task-service/v3/api-docs
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: task-service
+                port:
+                  number: 80
+          - path: /user-service/swagger-ui
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 80
+          - path: /user-service/v3/api-docs
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: user-service
