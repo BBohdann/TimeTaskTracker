@@ -1,5 +1,7 @@
 package com.example.TaskService.controller.configuration;
 
+import com.example.TaskService.service.exception.SubtaskNotFoundException;
+import com.example.TaskService.service.exception.TaskNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -15,19 +17,60 @@ public class MainExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, List<String>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, List<String>> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
-            errors.computeIfAbsent("errors", key -> new ArrayList<>()).add(fieldName + ": " + errorMessage);
+
+            errors.computeIfAbsent("errors", key -> new ArrayList<>())
+                    .add(fieldName + ": " + errorMessage);
         });
 
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.badRequest().body(errors);
+    }
+
+    @ExceptionHandler({TaskNotFoundException.class,
+                       SubtaskNotFoundException.class})
+    public ResponseEntity<Map<String, List<String>>> handleNotFound(RuntimeException ex) {
+        Map<String, List<String>> errors = new HashMap<>();
+
+        errors.put(
+                "errors",
+                Collections.singletonList(ex.getMessage())
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(errors);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, List<String>>> handleIllegalArgument(
+            IllegalArgumentException ex
+    ) {
+
+        Map<String, List<String>> errors = new HashMap<>();
+
+        errors.put(
+                "errors",
+                Collections.singletonList(ex.getMessage())
+        );
+
+        return ResponseEntity
+                .badRequest()
+                .body(errors);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, List<String>>> conflictException(Exception ex) {
-        Map<String, List<String>> map = new HashMap<>();
-        map.put("errors", Collections.singletonList(ex.getMessage()));
-        return new ResponseEntity<>(map, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<Map<String, List<String>>> handleGenericException(Exception ex) {
+        Map<String, List<String>> errors = new HashMap<>();
+        errors.put(
+                "errors",
+                Collections.singletonList("Internal server error")
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(errors);
     }
 }

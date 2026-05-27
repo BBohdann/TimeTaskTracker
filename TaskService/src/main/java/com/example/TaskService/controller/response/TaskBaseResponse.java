@@ -1,18 +1,17 @@
-package com.example.TaskService.controller.request;
+package com.example.TaskService.controller.response;
 
-import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-public class
-UpdateTaskRequest {
+public class TaskBaseResponse {
+    private Long id;
     private String taskName;
     private String description;
+    private LocalDateTime createdTime;
     private LocalDateTime endTime;
-    @Min(1)
     private Integer timeToSpend;
-
+    private Integer timeSpent;
     private Boolean isComplete;
 }

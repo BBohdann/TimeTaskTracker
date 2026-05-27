@@ -6,9 +6,7 @@ import lombok.Data;
 
 @Data
 public class UpdateTimeSpentRequest {
-    @NotNull
-    private Long id;
-
     @Min(1)
+    @NotNull
     private Integer timeSpent;
 }

@@ -1,8 +1,7 @@
 package com.example.TaskService.service.mapper;
 
 import com.example.TaskService.controller.request.CreateTaskRequest;
-import com.example.TaskService.controller.request.UpdateTaskRequest;
-import com.example.TaskService.controller.responce.TaskBaseResponse;
+import com.example.TaskService.controller.response.TaskBaseResponse;
 import com.example.TaskService.data.entity.Task;
 import com.example.TaskService.service.dto.CreateTaskDto;
 import com.example.TaskService.service.dto.SubtaskMainInfoDto;
@@ -53,17 +52,6 @@ public class TaskMapper {
                 .collect(Collectors.toList());
     }
 
-    public TaskDto updateTaskRequestToTaskDto(UpdateTaskRequest request, Long userId){
-        TaskDto dto = new TaskDto();
-        dto.setId(request.getId());
-        dto.setTaskName(request.getTaskName());
-        dto.setEndTime(request.getEndTime());
-        dto.setDescription(request.getDescription());
-        dto.setTimeToSpend(request.getTimeToSpend());
-        dto.setIsComplete(request.getIsComplete());
-        dto.setUserId(userId);
-        return dto;
-    }
 
     public CreateTaskDto taskRequestToDto(CreateTaskRequest taskRequest, Long userId){
         CreateTaskDto dto = new CreateTaskDto();

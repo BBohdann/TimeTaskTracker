@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -32,8 +33,8 @@ public class Subtask {
     @Size(max = 2000)
     private String description;
 
-    @NotNull
     @Column(name = "created_time")
+    @CreationTimestamp
     private LocalDateTime createdTime;
 
     @Column(name = "end_time")

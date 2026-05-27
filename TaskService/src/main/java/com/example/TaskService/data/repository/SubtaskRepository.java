@@ -13,22 +13,46 @@ import java.util.Optional;
 
 @Repository
 public interface SubtaskRepository extends JpaRepository<Subtask, Long> {
-    List<Subtask> findByTaskId(Long taskId);
+//    List<Subtask> findByTaskId(Long taskId);
 
-    boolean existsByTaskId(Long taskId);
+//    boolean existsByTaskId(Long taskId);
 
-    boolean existsByIdAndTaskId(Long subtaskId, Long taskId);
+//    Optional<Subtask>findByIdAndTaskUserId(Long id, Long userId);
 
-    @Query("SELECT s.task.id FROM Subtask s WHERE s.id = :subtaskId")
-    Optional<Long> findTaskIdBySubtaskId(@Param("subtaskId") Long subtaskId);
+//    boolean existsByIdAndTaskId(Long subtaskId, Long taskId);
 
-    @Modifying
-    @Query("UPDATE Subtask s SET s.timeSpent = s.timeSpent + :timeSpent WHERE s.id = :id")
-    void updateTimeSpent(@Param("id") Long id, @Param("timeSpent") Integer timeSpent);
+//    @Query("SELECT s.task.id FROM Subtask s WHERE s.id = :subtaskId")
+//    Optional<Long> findTaskIdBySubtaskId(@Param("subtaskId") Long subtaskId);
 
-    @Modifying(clearAutomatically = true)
-    @Query("UPDATE Subtask s SET s.isComplete = CASE WHEN s.isComplete = true THEN false ELSE true END WHERE s.id = :subtaskId")
-    @Transactional
-    int changeIsCompleteFlag(@Param("subtaskId") Long subtaskId);
+    @Query("SELECT s FROM Subtask s WHERE s.id = :subtaskId AND s.task.id = :taskId AND s.task.userId = :userId")
+    Optional<Subtask> findOwnedSubtask(@Param("taskId") Long taskId,
+                                       @Param("subtaskId") Long subtaskId,
+                                       @Param("userId") Long userId
+    );
+
+    @Query("SELECT s FROM Subtask s WHERE s.task.id = :taskId AND s.task.userId = :userId")
+    List<Subtask> findAllOwnedSubtasks(
+                                       @Param("taskId") Long taskId,
+                                       @Param("userId") Long userId
+    );
+
+    @Query("SELECT s FROM Subtask s WHERE s.task.id = :taskId AND s.task.userId = :userId AND s.isComplete = false")
+    List<Subtask> findActiveOwnedSubtasks(
+                                          @Param("taskId") Long taskId,
+                                          @Param("userId") Long userId
+    );
+
+    @Query("SELECT s FROM Subtask s WHERE s.task.id = :taskId AND s.task.userId = :userId AND s.isComplete = true")
+    List<Subtask> findInactiveOwnedSubtasks(
+                                          @Param("taskId") Long taskId,
+                                          @Param("userId") Long userId
+    );
+
+
+
+//    @Modifying(clearAutomatically = true)
+//    @Query("UPDATE Subtask s SET s.isComplete = CASE WHEN s.isComplete = true THEN false ELSE true END WHERE s.id = :subtaskId")
+//    @Transactional
+//    int changeIsCompleteFlag(@Param("subtaskId") Long subtaskId);
 
 }

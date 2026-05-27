@@ -1,6 +1,8 @@
 package com.example.TaskService.service.service;
 
+import com.example.TaskService.controller.request.SubtaskStatusRequest;
 import com.example.TaskService.data.entity.Subtask;
+import com.example.TaskService.data.entity.Task;
 import com.example.TaskService.data.repository.SubtaskRepository;
 import com.example.TaskService.data.repository.TaskRepository;
 import com.example.TaskService.service.dto.CreateSubtaskDto;
@@ -19,53 +21,64 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class SubtaskService {
-
     private final SubtaskRepository subtaskRepository;
     private final SubtaskMapper subtaskMapper;
     private final TaskRepository taskRepository;
 
-    public List<Subtask> getSubtasksByTaskId(Long taskId) {
-        return subtaskRepository.findByTaskId(taskId);
-    }
+    @Transactional
+    public SubtaskDto getSubtaskById(Long taskId, Long subtaskId, Long userId) {
+        Subtask subtask = findOwnedSubtaskOrThrow(
+                taskId,
+                subtaskId,
+                userId
+        );
 
-    public SubtaskDto getSubtaskById(Long id) throws SubtaskNotFoundException {
-        Subtask subtask = findSubtaskByIdOrThrow(id);
-        return subtaskMapper.entityToSubtaskDto(subtask);
+        return subtaskMapper.subtaskToSubtaskDto(subtask);
     }
 
     @Transactional
-    public SubtaskDto addSubtask(CreateSubtaskDto dto) throws TaskNotFoundException {
-        validateTaskExistence(dto.getTaskId());
+    public List<SubtaskDto> getSubtasksByStatus(Long taskId,Long userId, SubtaskStatusRequest status) {
+        List<Subtask> subtasks = switch (status) {
+            case ACTIVE ->
+                    subtaskRepository.findActiveOwnedSubtasks(
+                            taskId,
+                            userId
+                    );
+            case ALL ->
+                    subtaskRepository.findAllOwnedSubtasks(
+                            taskId,
+                            userId
+                    );
+            case INACTIVE ->
+                    subtaskRepository.findInactiveOwnedSubtasks(
+                            taskId,
+                            userId
+                    );
+        };
 
-        dto.setCreatedTime(LocalDateTime.now());
-        Subtask saved = subtaskRepository.save(subtaskMapper.createSubtaskDtoToEntity(dto));
-        return subtaskMapper.entityToSubtaskDto(saved);
+        return subtaskMapper.subtasksToSubtasksDtos(subtasks);
+    }
+
+    public SubtaskDto createSubtask(Long taskId, Long userId, CreateSubtaskDto dto) {
+        Task task = findTaskOrThrow(taskId, userId);
+        Subtask entity = subtaskMapper.createSubtaskDtoToEntity(dto);
+        entity.setTask(task);
+
+        return subtaskMapper.subtaskToSubtaskDto(subtaskRepository.save(entity));
     }
 
     @Transactional
-    public void updateSubtaskTimeSpent(SubtaskDto dto) throws TaskNotFoundException, SubtaskNotFoundException {
-        findSubtaskByIdOrThrow(dto.getId());
+    public void updateSubtaskTimeSpent(Long taskId, Long subtaskId, Long userId, Integer timeSpent) {
+        Subtask subtask = findOwnedSubtaskOrThrow(taskId, subtaskId, userId);
+        subtask.setTimeSpent(subtask.getTimeSpent() + timeSpent);
 
-        subtaskRepository.updateTimeSpent(dto.getId(), dto.getTimeSpent());
-
-        Long taskId = subtaskRepository.findTaskIdBySubtaskId(dto.getId())
-                .orElseThrow(() -> new TaskNotFoundException(
-                        Optional.ofNullable(dto.getTaskId()).map(Object::toString).orElse("Unknown Task ID")));
-
-        taskRepository.updateTimeSpent(taskId, dto.getTimeSpent());
+        Task task = subtask.getTask();
+        task.setTimeSpent(task.getTimeSpent() + timeSpent);
     }
 
     @Transactional
-    public void changeIsCompleteFlag(Long subtaskId) throws SubtaskNotFoundException {
-        int updated = subtaskRepository.changeIsCompleteFlag(subtaskId);
-        if (updated == 0) {
-            throw new SubtaskNotFoundException(subtaskId.toString());
-        }
-    }
-
-    @Transactional
-    public void updateSubtask(SubtaskDto dto) throws SubtaskNotFoundException {
-        Subtask existing = findSubtaskByIdOrThrow(dto.getId());
+    public SubtaskDto updateSubtask(Long taskId, Long subtaskId, Long userId, SubtaskDto dto) {
+        Subtask existing = findOwnedSubtaskOrThrow(taskId, subtaskId, userId);
 
         Optional.ofNullable(dto.getSubtaskName()).ifPresent(existing::setSubtaskName);
         Optional.ofNullable(dto.getDescription()).ifPresent(existing::setDescription);
@@ -73,23 +86,28 @@ public class SubtaskService {
         Optional.ofNullable(dto.getTimeToSpend()).ifPresent(existing::setTimeToSpend);
         Optional.ofNullable(dto.getIsComplete()).ifPresent(existing::setIsComplete);
 
-        subtaskRepository.save(existing);
+        return subtaskMapper.subtaskToSubtaskDto(existing);
     }
 
     @Transactional
-    public void deleteSubtask(Long id) throws SubtaskNotFoundException {
-        findSubtaskByIdOrThrow(id);
-        subtaskRepository.deleteById(id);
+    public void deleteSubtask(Long subtaskId, Long taskId, Long userId) {
+        Subtask subtask = findOwnedSubtaskOrThrow(taskId, subtaskId, userId);
+        subtaskRepository.delete(subtask);
     }
 
-    private void validateTaskExistence(Long taskId) throws TaskNotFoundException {
-        if (!taskRepository.existsById(taskId)) {
-            throw new TaskNotFoundException("Task with ID " + taskId + " not found");
-        }
+    private Task findTaskOrThrow(Long taskId, Long userId) {
+        return taskRepository
+                .findByIdAndUserId(taskId, userId)
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
     }
 
-    private Subtask findSubtaskByIdOrThrow(Long id) throws SubtaskNotFoundException {
-        return subtaskRepository.findById(id)
-                .orElseThrow(() -> new SubtaskNotFoundException("Subtask with ID " + id + " not found"));
+    private Subtask findOwnedSubtaskOrThrow(Long taskId,
+            Long subtaskId,
+            Long userId) throws SubtaskNotFoundException {
+
+        return subtaskRepository
+                .findOwnedSubtask(taskId, subtaskId, userId)
+                .orElseThrow(() ->
+                        new SubtaskNotFoundException(subtaskId));
     }
 }

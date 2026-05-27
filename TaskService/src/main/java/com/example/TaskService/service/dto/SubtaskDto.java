@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 @Data
 public class SubtaskDto {
     private Long id;
-
     private Long taskId;
 
     @Size(max = 255)

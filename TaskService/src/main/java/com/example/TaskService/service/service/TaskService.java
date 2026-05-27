@@ -1,5 +1,7 @@
 package com.example.TaskService.service.service;
 
+import com.example.TaskService.controller.request.TaskStatusRequest;
+import com.example.TaskService.controller.request.UpdateTaskRequest;
 import com.example.TaskService.data.entity.Task;
 import com.example.TaskService.data.repository.TaskRepository;
 import com.example.TaskService.service.dto.CreateTaskDto;
@@ -23,60 +25,87 @@ public class TaskService {
     public TaskDto addTask(CreateTaskDto dto) {
         dto.setCreatedTime(LocalDateTime.now());
         Task savedTask = taskRepository.save(taskMapper.createTaskToTaskEntity(dto));
+
         return taskMapper.toTaskDto(savedTask);
     }
 
     @Transactional
-    public TaskDto updateTimeSpent(TaskDto dto) throws TaskNotFoundException {
-        validateTaskExistence(dto.getId(), dto.getUserId());
-        taskRepository.updateTimeSpent(dto.getId(), dto.getTimeSpent());
-        return fetchTaskDtoById(dto.getId());
+    public TaskDto updateTimeSpent(Long taskId, Integer timeSpent, Long userId) {
+        Task task = validateTaskExistence(taskId, userId);
+        task.setTimeSpent(task.getTimeSpent()+timeSpent);
+
+        return taskMapper.toTaskDto(task);
     }
 
     @Transactional
-    public TaskDto updateTask(TaskDto dto) throws TaskNotFoundException {
-        Task existingTask = validateTaskExistence(dto.getId(), dto.getUserId());
-        updateTaskFields(existingTask, dto);
-        return taskMapper.toTaskDto(taskRepository.save(existingTask));
+    public TaskDto updateTask(Long taskId, UpdateTaskRequest request, Long userId) {
+        Task task = validateTaskExistence(taskId, userId);
+        updateTaskFields(task, request);
+
+        return taskMapper.toTaskDto(task);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<Task> getTasksByUserId(Long userId) {
         return taskRepository.findTasksByUserId(userId);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<Task> getActiveTasksByUserId(Long userId) {
         return taskRepository.findActiveTasksByUserId(userId);
     }
 
-    @Transactional(readOnly = true)
-    public TaskDto getTaskById(Long id) throws TaskNotFoundException {
+    @Transactional
+    public TaskDto getTaskById(Long id) {
         return fetchTaskDtoById(id);
     }
 
     @Transactional
-    public void deleteTask(Long id, Long userId) throws TaskNotFoundException {
+    public void deleteTask(Long id, Long userId) {
         validateTaskExistence(id, userId);
         taskRepository.deleteById(id);
     }
 
-    private Task validateTaskExistence(Long taskId, Long userId) throws TaskNotFoundException {
+    private Task validateTaskExistence(Long taskId, Long userId) {
         return taskRepository.findByIdAndUserId(taskId, userId)
-                .orElseThrow(() -> new TaskNotFoundException("Task with ID " + taskId + " not found"));
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
     }
 
-    private TaskDto fetchTaskDtoById(Long taskId) throws TaskNotFoundException {
+    private TaskDto fetchTaskDtoById(Long taskId) {
         return taskRepository.findById(taskId)
                 .map(taskMapper::toTaskDto)
-                .orElseThrow(() -> new TaskNotFoundException("Task with ID " + taskId + " not found"));
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
     }
 
-    private void updateTaskFields(Task existingTask, TaskDto dto) {
-        if (dto.getTaskName() != null) existingTask.setTaskName(dto.getTaskName());
-        if (dto.getDescription() != null) existingTask.setDescription(dto.getDescription());
-        if (dto.getEndTime() != null) existingTask.setEndTime(dto.getEndTime());
-        if (dto.getTimeToSpend() != null) existingTask.setTimeToSpend(dto.getTimeToSpend());
-        if (dto.getIsComplete() != null) existingTask.setIsComplete(dto.getIsComplete());
+    @Transactional
+    public List<TaskDto> getTasksByStatus(Long userId, TaskStatusRequest status) {
+        List<Task> tasks = switch (status) {
+            case ACTIVE ->
+                    taskRepository.findActiveTasksByUserId(userId);
+            case ALL ->
+                    taskRepository.findTasksByUserId(userId);
+            case INACTIVE ->
+                    taskRepository.findTasksByUserId(userId);
+        };
+
+        return taskMapper.toTaskDtos(tasks);
+    }
+
+    private void updateTaskFields(Task task, UpdateTaskRequest request) {
+        if (request.getTaskName() != null) {
+            task.setTaskName(request.getTaskName());
+        }
+        if (request.getDescription() != null) {
+            task.setDescription(request.getDescription());
+        }
+        if (request.getEndTime() != null) {
+            task.setEndTime(request.getEndTime());
+        }
+        if (request.getTimeToSpend() != null) {
+            task.setTimeToSpend(request.getTimeToSpend());
+        }
+        if (request.getIsComplete() != null) {
+            task.setIsComplete(request.getIsComplete());
+        }
     }
 }

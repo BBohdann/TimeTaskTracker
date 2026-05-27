@@ -1,12 +1,11 @@
-package com.example.TaskService.controller.responce;
+package com.example.TaskService.controller.response;
 
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-public class SubtaskResponce {
+public class SubtaskCreatedResponse {
     private Long id;
 
     private Long taskId;

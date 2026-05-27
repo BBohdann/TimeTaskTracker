@@ -7,7 +7,6 @@ import java.time.LocalDateTime;
 
 @Data
 public class UpdateSubtaskRequest {
-    private Long id;
     private String subtaskName;
     private String description;
     private LocalDateTime endTime;

@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface TaskRepository extends JpaRepository<Task, Long> {
     @Modifying
     @Query("UPDATE Task t SET t.timeSpent = t.timeSpent + :timeSpent WHERE t.id = :id")
-    void updateTimeSpent(@Param("id") Long id, @Param("timeSpent") Integer timeSpent);
+    void incrementTimeSpent (@Param("id") Long id, @Param("timeSpent") Integer timeSpent);
 
     @Query("SELECT t FROM Task t WHERE t.userId = :userId ORDER BY t.isComplete ASC")
     List<Task> findTasksByUserId(@Param("userId") Long userId);
