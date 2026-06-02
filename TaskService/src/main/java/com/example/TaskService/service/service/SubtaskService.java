@@ -25,7 +25,7 @@ public class SubtaskService {
     private final SubtaskMapper subtaskMapper;
     private final TaskRepository taskRepository;
 
-    @Transactional
+    @Transactional(readOnly = true)
     public SubtaskDto getSubtaskById(Long taskId, Long subtaskId, Long userId) {
         Subtask subtask = findOwnedSubtaskOrThrow(
                 taskId,
@@ -33,10 +33,10 @@ public class SubtaskService {
                 userId
         );
 
-        return subtaskMapper.subtaskToSubtaskDto(subtask);
+        return subtaskMapper.subtaskEntityToSubtaskDto(subtask);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<SubtaskDto> getSubtasksByStatus(Long taskId,Long userId, SubtaskStatusRequest status) {
         List<Subtask> subtasks = switch (status) {
             case ACTIVE ->
@@ -56,15 +56,17 @@ public class SubtaskService {
                     );
         };
 
-        return subtaskMapper.subtasksToSubtasksDtos(subtasks);
+        return subtaskMapper.subtaskEntitiesToSubtaskDtos(subtasks);
     }
 
+    @Transactional
     public SubtaskDto createSubtask(Long taskId, Long userId, CreateSubtaskDto dto) {
         Task task = findTaskOrThrow(taskId, userId);
         Subtask entity = subtaskMapper.createSubtaskDtoToEntity(dto);
+        entity.setCreatedTime(LocalDateTime.now());
         entity.setTask(task);
 
-        return subtaskMapper.subtaskToSubtaskDto(subtaskRepository.save(entity));
+        return subtaskMapper.subtaskEntityToSubtaskDto(subtaskRepository.save(entity));
     }
 
     @Transactional
@@ -86,7 +88,7 @@ public class SubtaskService {
         Optional.ofNullable(dto.getTimeToSpend()).ifPresent(existing::setTimeToSpend);
         Optional.ofNullable(dto.getIsComplete()).ifPresent(existing::setIsComplete);
 
-        return subtaskMapper.subtaskToSubtaskDto(existing);
+        return subtaskMapper.subtaskEntityToSubtaskDto(existing);
     }
 
     @Transactional

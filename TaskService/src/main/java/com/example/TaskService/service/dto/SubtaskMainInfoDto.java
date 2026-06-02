@@ -6,14 +6,10 @@ import java.time.LocalDateTime;
 
 @Data
 public class SubtaskMainInfoDto {
-    private Long Id;
-
+    private Long id;
     private String  subtaskName;
-
     private Integer timeSpent;
-
-    private Boolean isCompleate;
-
-
+    private Integer timeToSpent;
+    private Boolean isComplete;
     private LocalDateTime endTime;
 }

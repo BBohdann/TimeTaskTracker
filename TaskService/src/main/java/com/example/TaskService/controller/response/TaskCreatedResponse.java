@@ -5,8 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class SubtaskCreatedResponse {
+public class TaskCreatedResponse {
     private Long id;
-    private Long taskId;
     private LocalDateTime createdTime;
 }

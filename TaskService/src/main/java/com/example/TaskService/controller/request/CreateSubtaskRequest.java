@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 
 @Data
 public class CreateSubtaskRequest {
-
     @NotBlank
     @Size(max = 255)
     private String subtaskName;

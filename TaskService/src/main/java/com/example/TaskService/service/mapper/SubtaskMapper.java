@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class SubtaskMapper {
-    public CreateSubtaskDto subtaskRequestToDto(CreateSubtaskRequest taskRequest){
+    public CreateSubtaskDto subtaskRequestToCreateSubtaskDto(CreateSubtaskRequest taskRequest){
         CreateSubtaskDto dto = new CreateSubtaskDto();
         dto.setSubtaskName(taskRequest.getSubtaskName());
         dto.setEndTime(taskRequest.getEndTime());
@@ -27,7 +27,6 @@ public class SubtaskMapper {
 
     public Subtask createSubtaskDtoToEntity(CreateSubtaskDto dto){
         Subtask entity = new Subtask();
-        entity.setCreatedTime(LocalDateTime.now());
         entity.setSubtaskName(dto.getSubtaskName());
         entity.setEndTime(dto.getEndTime());
         entity.setDescription(dto.getDescription());
@@ -45,7 +44,7 @@ public class SubtaskMapper {
         return dto;
     }
 
-    public SubtaskDto subtaskToSubtaskDto(Subtask entity) {
+    public SubtaskDto subtaskEntityToSubtaskDto(Subtask entity) {
         SubtaskDto dto = new SubtaskDto();
         dto.setId(entity.getId());
         dto.setTaskId(entity.getTask().getId());
@@ -59,9 +58,9 @@ public class SubtaskMapper {
         return dto;
     }
 
-    public List<SubtaskDto> subtasksToSubtasksDtos(List<Subtask> entities) {
+    public List<SubtaskDto> subtaskEntitiesToSubtaskDtos(List<Subtask> entities) {
         return entities.stream()
-                .map(this::subtaskToSubtaskDto)
+                .map(this::subtaskEntityToSubtaskDto)
                 .toList();
     }
 

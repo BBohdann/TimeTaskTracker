@@ -7,12 +7,8 @@ import com.example.TaskService.controller.response.SubtaskResponse;
 import com.example.TaskService.controller.response.UpdatedSubtaskResponse;
 import com.example.TaskService.service.dto.CreateSubtaskDto;
 import com.example.TaskService.service.dto.SubtaskDto;
-import com.example.TaskService.service.dto.TaskDto;
-import com.example.TaskService.service.exception.SubtaskNotFoundException;
-import com.example.TaskService.service.exception.TaskNotFoundException;
 import com.example.TaskService.service.mapper.SubtaskMapper;
 import com.example.TaskService.service.service.SubtaskService;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Positive;
@@ -44,7 +40,7 @@ public class SubtaskController {
     public ResponseEntity<SubtaskCreatedResponse> createSubtask(
             @PathVariable @Positive Long taskId,
             @Valid @RequestBody CreateSubtaskRequest subtaskRequest) {
-        CreateSubtaskDto subtaskDto = subtaskMapper.subtaskRequestToDto(subtaskRequest);
+        CreateSubtaskDto subtaskDto = subtaskMapper.subtaskRequestToCreateSubtaskDto(subtaskRequest);
 
         SubtaskDto saved = subtaskService.createSubtask(
                 taskId,
@@ -60,9 +56,9 @@ public class SubtaskController {
 //    @Operation(summary = "Update time spent on a subtask", description = "Updates the time spent on a specific subtask. The Authorization header should contain the Bearer token.")
     @PatchMapping("/{subtaskId}/time-spent")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> updateSubtaskSpentTime(
-            @PathVariable Long taskId,
-            @PathVariable Long subtaskId,
+    public ResponseEntity<Void> updateSubtaskTimeSpent(
+            @PathVariable @Positive Long taskId,
+            @PathVariable @Positive Long subtaskId,
             @Valid @RequestBody UpdateTimeSpentRequest taskRequest)  {
 
         subtaskService.updateSubtaskTimeSpent(taskId, subtaskId, getUserIdFromAuth(), taskRequest.getTimeSpent());
@@ -75,8 +71,8 @@ public class SubtaskController {
     @PatchMapping("/{subtaskId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UpdatedSubtaskResponse> updateSubtask(
-            @PathVariable Long taskId,
-            @PathVariable Long subtaskId,
+            @PathVariable @Positive Long taskId,
+            @PathVariable @Positive Long subtaskId,
             @Valid @RequestBody UpdateSubtaskRequest updateRequest) {
         SubtaskDto updatedSubtask = subtaskService.updateSubtask(
                 taskId,
@@ -94,8 +90,8 @@ public class SubtaskController {
     @DeleteMapping("/{subtaskId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteSubtask(
-            @PathVariable Long taskId,
-            @PathVariable Long subtaskId) {
+            @PathVariable @Positive Long taskId,
+            @PathVariable @Positive Long subtaskId) {
         subtaskService.deleteSubtask(subtaskId, taskId, getUserIdFromAuth());
 
         return ResponseEntity.noContent().build();
@@ -104,8 +100,9 @@ public class SubtaskController {
 //    @Operation(summary = "Get subtask by ID", description = "Fetches subtask information by its ID. The Authorization header should contain the Bearer token.")
     @GetMapping("/{subtaskId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<SubtaskResponse> getSubtask(@PathVariable Long taskId,
-                                                      @PathVariable Long subtaskId) {
+    public ResponseEntity<SubtaskResponse> getSubtask(
+            @PathVariable @Positive Long taskId,
+            @PathVariable @Positive Long subtaskId) {
         SubtaskDto subtask = subtaskService.getSubtaskById(
                 taskId,
                 subtaskId,
@@ -117,7 +114,7 @@ public class SubtaskController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<SubtaskResponse>> getSubtasks(@PathVariable Long taskId,
+    public ResponseEntity<List<SubtaskResponse>> getSubtasks(@PathVariable @Positive Long taskId,
                                                              @RequestParam SubtaskStatusRequest status) {
         List<SubtaskDto> subtasks = subtaskService.getSubtasksByStatus(
                 taskId,

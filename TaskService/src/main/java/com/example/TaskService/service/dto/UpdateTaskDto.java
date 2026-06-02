@@ -1,17 +1,15 @@
-package com.example.TaskService.controller.response;
+package com.example.TaskService.service.dto;
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-public class TaskBaseResponse {
-    private Long id;
+public class UpdateTaskDto {
     private String taskName;
     private String description;
-    private LocalDateTime createdTime;
     private LocalDateTime endTime;
     private Integer timeToSpend;
-    private Integer timeSpent;
     private Boolean isComplete;
+
 }

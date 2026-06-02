@@ -13,16 +13,6 @@ import java.util.Optional;
 
 @Repository
 public interface SubtaskRepository extends JpaRepository<Subtask, Long> {
-//    List<Subtask> findByTaskId(Long taskId);
-
-//    boolean existsByTaskId(Long taskId);
-
-//    Optional<Subtask>findByIdAndTaskUserId(Long id, Long userId);
-
-//    boolean existsByIdAndTaskId(Long subtaskId, Long taskId);
-
-//    @Query("SELECT s.task.id FROM Subtask s WHERE s.id = :subtaskId")
-//    Optional<Long> findTaskIdBySubtaskId(@Param("subtaskId") Long subtaskId);
 
     @Query("SELECT s FROM Subtask s WHERE s.id = :subtaskId AND s.task.id = :taskId AND s.task.userId = :userId")
     Optional<Subtask> findOwnedSubtask(@Param("taskId") Long taskId,
@@ -47,12 +37,4 @@ public interface SubtaskRepository extends JpaRepository<Subtask, Long> {
                                           @Param("taskId") Long taskId,
                                           @Param("userId") Long userId
     );
-
-
-
-//    @Modifying(clearAutomatically = true)
-//    @Query("UPDATE Subtask s SET s.isComplete = CASE WHEN s.isComplete = true THEN false ELSE true END WHERE s.id = :subtaskId")
-//    @Transactional
-//    int changeIsCompleteFlag(@Param("subtaskId") Long subtaskId);
-
 }
