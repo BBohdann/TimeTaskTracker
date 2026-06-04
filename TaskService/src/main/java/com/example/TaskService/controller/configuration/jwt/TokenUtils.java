@@ -23,7 +23,6 @@ public class TokenUtils {
     }
 
     public Claims parseClaims(String token) {
-
         return Jwts.parserBuilder()
                 .setSigningKey(key())
                 .build()

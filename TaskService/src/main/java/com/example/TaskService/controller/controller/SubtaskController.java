@@ -114,8 +114,9 @@ public class SubtaskController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<SubtaskResponse>> getSubtasks(@PathVariable @Positive Long taskId,
-                                                             @RequestParam SubtaskStatusRequest status) {
+    public ResponseEntity<List<SubtaskResponse>> getSubtasks(
+            @PathVariable @Positive Long taskId,
+            @RequestParam SubtaskStatusRequest status) {
         List<SubtaskDto> subtasks = subtaskService.getSubtasksByStatus(
                 taskId,
                 getUserIdFromAuth(),
@@ -129,6 +130,6 @@ public class SubtaskController {
 
     private Long getUserIdFromAuth() {
         JwtAuthentication authentication = (JwtAuthentication) SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getUserId();
+        return Long.valueOf(authentication.getCredentials().toString());
     }
 }
