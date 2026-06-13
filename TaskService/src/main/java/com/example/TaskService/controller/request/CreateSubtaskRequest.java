@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -17,7 +18,7 @@ public class CreateSubtaskRequest {
     @Size(max = 2000)
     private String description;
 
-    private LocalDateTime endTime;
+    private Instant endTime;
 
     @Min(1)
     private Integer timeToSpend;

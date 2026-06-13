@@ -16,7 +16,6 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
     @ExceptionHandler(value = {
             UserAlreadyExistException.class,
             UserIncorrectPasswordException.class,
@@ -33,6 +32,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, List<String>>> anotherException(Exception ex) {
         Map<String, List<String>> map = new HashMap<>();
         map.put("errors", Collections.singletonList(ex.getMessage()));
-        return new ResponseEntity<>(map, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(map, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

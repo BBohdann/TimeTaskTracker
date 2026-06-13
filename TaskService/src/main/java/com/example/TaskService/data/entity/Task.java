@@ -7,12 +7,20 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "tasks")
+@EntityListeners(AuditingEntityListener.class)
 public class Task {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,12 +38,12 @@ public class Task {
         @Size(max = 2000)
         private String description;
 
-        @NotNull
+        @CreatedDate
         @Column(name = "created_time")
-        private LocalDateTime createdTime;
+        private Instant createdTime;
 
         @Column(name = "end_time")
-        private LocalDateTime endTime;
+        private Instant endTime;
 
         @Min(1)
         @Column(name = "time_to_spend")
@@ -49,6 +57,5 @@ public class Task {
         private Boolean isComplete = false;
 
         @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
-        @JsonManagedReference
         private List<Subtask> subtasks;
 }

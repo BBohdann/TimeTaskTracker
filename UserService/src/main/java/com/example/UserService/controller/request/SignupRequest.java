@@ -9,7 +9,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SignupRequest {
-
     @NotBlank
     @Size(min = 3, max = 100)
     private String login;
@@ -19,11 +18,10 @@ public class SignupRequest {
     private String password;
 
     @NotBlank
-//    @Email
+    @Email
     private String email;
 
     @NotBlank
     @Size(min = 3, max = 100)
     private String nickname;
-
 }

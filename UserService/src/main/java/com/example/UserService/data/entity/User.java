@@ -1,19 +1,18 @@
 package com.example.UserService.data.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.validator.constraints.Length;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @Entity
 @Getter
 @Setter
-@Table( name = "users" ,
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "login"),
-                @UniqueConstraint(columnNames = "email")
-        })
+@EntityListeners(AuditingEntityListener.class)
+@Table(name = "users")
 public class User extends TimeBasedEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,21 +30,12 @@ public class User extends TimeBasedEntity{
 
     @NotBlank
     @Length(max = 50)
-//    @Email
+    @Email
     @Column(name = "email",nullable = false, unique = true)
     private String email;
 
     @Column(name = "nickname")
     @Length(max = 100)
-    @NotNull
+    @NotBlank
     private String nickname;
-
-    public User(String login, String password, String email, String nickname) {
-        this.nickname = nickname;
-        this.login = login;
-        this.password = password;
-        this.email = email;
-    }
-    public User() {
-    }
 }

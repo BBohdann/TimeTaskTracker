@@ -1,7 +1,7 @@
 package com.example.UserService.controller.configuration.jwt;
 
-import com.example.UserService.service.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.UserService.service.service.CustomUserDetailsService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,21 +17,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableMethodSecurity
-public class SecurityConfig {
-    @Autowired private UserService userDetailsService;
-    @Autowired private AuthHandler unauthorizedHandler;
-    @Autowired
-    private PasswordEncoder encoder;
-
-    @Bean
-    public TokenFilter authenticationJwtTokenFilter() {
-        return new TokenFilter();
-    }
+@RequiredArgsConstructor
+    public class SecurityConfig {
+    private final CustomUserDetailsService userDetailsService;
+    private final AuthHandler unauthorizedHandler;
+    private final PasswordEncoder encoder;
+    private final TokenFilter tokenFilter;
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-
         authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(encoder);
 
@@ -50,13 +45,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth
-                                .requestMatchers("/api/user/**").authenticated()
+                                .requestMatchers("/api/users/**").authenticated()
                                 .anyRequest().permitAll()
                 );
 
-        http.authenticationProvider(authenticationProvider());
-
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

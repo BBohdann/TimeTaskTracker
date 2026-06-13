@@ -1,4 +1,4 @@
-package com.example.TaskService.controller.configuration;
+package com.example.TaskService.controller.configuration.mvc;
 
 import com.example.TaskService.controller.request.TaskStatusRequest;
 import org.springframework.core.convert.converter.Converter;

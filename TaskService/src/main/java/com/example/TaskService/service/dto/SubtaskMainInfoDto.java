@@ -2,6 +2,7 @@ package com.example.TaskService.service.dto;
 
 import lombok.Data;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -11,5 +12,5 @@ public class SubtaskMainInfoDto {
     private Integer timeSpent;
     private Integer timeToSpent;
     private Boolean isComplete;
-    private LocalDateTime endTime;
+    private Instant endTime;
 }

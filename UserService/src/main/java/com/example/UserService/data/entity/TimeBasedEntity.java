@@ -5,18 +5,19 @@ import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
 @Getter
 @Setter
 @MappedSuperclass
-public class TimeBasedEntity {
-    @CreatedDate
+public abstract class TimeBasedEntity {
+    @LastModifiedDate
     @Column(name = "last_updated_time", nullable = false)
-    LocalDate lastUpdatedDate;
+    Instant lastUpdatedDate;
 
     @CreatedDate
     @Column(name = "created_time", nullable = false, updatable = false)
-    LocalDate createdDate;
+    Instant createdDate;
 }

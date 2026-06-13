@@ -6,25 +6,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Collections;
 
 public class UserDetailsImpl implements UserDetails {
     private static final long serialVersionUID = 1L;
-
-    private String login;
-    private Long id;
-
+    private final String login;
+    private final Long id;
     @JsonIgnore
-    private String password;
-
-    @JsonIgnore
-    private String token;
-
-    public UserDetailsImpl(Long id, String login, String password, String token) {
-        this.login = login;
-        this.id = id;
-        this.password = password;
-        this.token = token;
-    }
+    private final String password;
 
     public UserDetailsImpl(Long id, String login, String password) {
         this.login = login;
@@ -40,13 +29,9 @@ public class UserDetailsImpl implements UserDetails {
         return id;
     }
 
-    public String getToken() {
-        return token;
-    }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override

@@ -3,6 +3,8 @@ package com.example.TaskService.service.dto;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Data
@@ -16,8 +18,8 @@ public class SubtaskDto {
     @Size(max = 2000)
     private String description;
 
-    private LocalDateTime createdTime;
-    private LocalDateTime endTime;
+    private Instant createdTime;
+    private Instant endTime;
 
     @Min(0)
     private Integer timeSpent;

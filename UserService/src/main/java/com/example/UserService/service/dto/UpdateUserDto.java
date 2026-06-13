@@ -6,7 +6,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UpdateUserDto {
-
     private String oldLogin;
     private String oldPassword;
     private String oldEmail;

@@ -1,6 +1,6 @@
 package com.example.TaskService.controller.controller;
 
-import com.example.TaskService.controller.configuration.jwt.JwtAuthentication;
+import com.example.TaskService.controller.configuration.mvc.CurrentUserId;
 import com.example.TaskService.controller.request.CreateTaskRequest;
 import com.example.TaskService.controller.request.TaskStatusRequest;
 import com.example.TaskService.controller.request.UpdateTaskRequest;
@@ -17,10 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,12 +40,13 @@ public class TaskController {
 
     //    @Operation(summary = "Create a new task", description = "Allows the user to create a new task. The Authorization header should contain the Bearer token.")
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<TaskCreatedResponse> createTask(@Valid @RequestBody CreateTaskRequest taskRequest) {
+    public ResponseEntity<TaskCreatedResponse> createTask(
+            @Valid @RequestBody CreateTaskRequest taskRequest,
+            @CurrentUserId Long userId) {
         TaskDto createdTask = taskService.createTask(
                 taskMapper.taskRequestToCreateTaskDto(
                         taskRequest,
-                        getUserIdFromAuth())
+                        userId)
         );
 
         return ResponseEntity
@@ -58,31 +56,29 @@ public class TaskController {
 
     //    @Operation(summary = "Update time spent on a task", description = "Updates the time spent on a specific task. The Authorization header should contain the Bearer token.")
     @PatchMapping("/{taskId}/time-spent")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updateTimeSpent(
             @PathVariable @Positive Long taskId,
-            @Valid @RequestBody UpdateTimeSpentRequest request) {
+            @Valid @RequestBody UpdateTimeSpentRequest request,
+            @CurrentUserId Long userId) {
         taskService.updateTimeSpent(
                 taskId,
                 request.getTimeSpent(),
-                getUserIdFromAuth()
+                userId
         );
 
-        return ResponseEntity
-                .status(HttpStatus.NO_CONTENT)
-                .build();
+        return ResponseEntity.noContent().build();
     }
 
     //    @Operation(summary = "Update task", description = "Allows the user to update task information. The Authorization header should contain the Bearer token.")
     @PatchMapping("/{taskId}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TaskUpdatedResponse> updateTask(
             @PathVariable @Positive Long taskId,
-            @Valid @RequestBody UpdateTaskRequest request) {
+            @Valid @RequestBody UpdateTaskRequest request,
+            @CurrentUserId Long userId) {
         TaskDto updatedTask = taskService.updateTask(
                 taskId,
                 taskMapper.updateTaskRequestToUpdateTaskDto(request),
-                getUserIdFromAuth()
+                userId
         );
 
         return ResponseEntity.ok(taskMapper.taskDtoToTaskUpdatedResponse(updatedTask));
@@ -90,43 +86,35 @@ public class TaskController {
 
     //    @Operation(summary = "Delete a task", description = "Deletes a task by its ID. The Authorization header should contain the Bearer token.")
     @DeleteMapping("/{taskId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> deleteTask(@PathVariable @Positive Long taskId) {
-        taskService.deleteTask(taskId, getUserIdFromAuth());
+    public ResponseEntity<Void> deleteTask(
+            @PathVariable @Positive Long taskId,
+            @CurrentUserId Long userId) {
+        taskService.deleteTask(taskId, userId);
 
         return ResponseEntity.noContent().build();
     }
 
     //    @Operation(summary = "Get task by ID", description = "Fetches task information by its ID. The Authorization header should contain the Bearer token.")
     @GetMapping("/{taskId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<TaskResponse> getTask(@PathVariable @Positive Long taskId) {
-        TaskWithSubtasksDto task = taskService.getTaskById(taskId, getUserIdFromAuth());
+    public ResponseEntity<TaskResponse> getTask(
+            @PathVariable @Positive Long taskId,
+            @CurrentUserId Long userId) {
+        TaskWithSubtasksDto task = taskService.getTaskById(taskId, userId);
 
         return ResponseEntity.ok(
                 taskMapper.taskWithSubtasksDtoToTaskResponse(task));
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<TaskResponse>> getTasks(@RequestParam TaskStatusRequest status) {
+    public ResponseEntity<List<TaskResponse>> getTasks(
+            @RequestParam TaskStatusRequest status,
+            @CurrentUserId Long userId) {
         List<TaskWithSubtasksDto> tasks = taskService.getTasksByStatus(
-                getUserIdFromAuth(),
+                userId,
                 status
         );
 
         return ResponseEntity.ok(
                 taskMapper.taskWithSubtasksDtosToTaskResponses(tasks));
-    }
-
-    private Long getUserIdFromAuth() {
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        if (!(authentication instanceof JwtAuthentication jwtAuth)) {
-            throw new AccessDeniedException("Authentication required");
-        }
-
-        return jwtAuth.getUserId();
     }
 }

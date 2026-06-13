@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Getter
@@ -19,7 +20,7 @@ public class CreateTaskRequest {
     @Size(max = 2000)
     private String description;
 
-    private LocalDateTime endTime;
+    private Instant endTime;
 
     @Min(1)
     private Integer timeToSpend;

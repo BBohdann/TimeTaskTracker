@@ -63,7 +63,6 @@ public class SubtaskService {
     public SubtaskDto createSubtask(Long taskId, Long userId, CreateSubtaskDto dto) {
         Task task = findTaskOrThrow(taskId, userId);
         Subtask entity = subtaskMapper.createSubtaskDtoToEntity(dto);
-        entity.setCreatedTime(LocalDateTime.now());
         entity.setTask(task);
 
         return subtaskMapper.subtaskEntityToSubtaskDto(subtaskRepository.save(entity));

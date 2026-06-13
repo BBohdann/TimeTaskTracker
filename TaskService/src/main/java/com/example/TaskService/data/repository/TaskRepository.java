@@ -16,7 +16,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT t FROM Task t WHERE t.userId = :userId ORDER BY t.isComplete ASC")
     List<Task> findTasksByUserId(@Param("userId") Long userId);
 
-    @Query("SELECT t FROM Task t WHERE t.userId = :userId AND t.isComplete = false")
+    @Query("SELECT t FROM Task t WHERE t.userId = :userId AND t.isComplete = false ORDER BY endTime ASC")
     List<Task> findActiveTasksByUserId(@Param("userId") Long userId);
 
     @Query("SELECT t FROM Task t WHERE t.userId = :userId AND t.isComplete = true")

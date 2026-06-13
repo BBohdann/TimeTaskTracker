@@ -26,7 +26,7 @@ public interface SubtaskRepository extends JpaRepository<Subtask, Long> {
                                        @Param("userId") Long userId
     );
 
-    @Query("SELECT s FROM Subtask s WHERE s.task.id = :taskId AND s.task.userId = :userId AND s.isComplete = false")
+    @Query("SELECT s FROM Subtask s WHERE s.task.id = :taskId AND s.task.userId = :userId AND s.isComplete = false ORDER BY endTime ASC")
     List<Subtask> findActiveOwnedSubtasks(
                                           @Param("taskId") Long taskId,
                                           @Param("userId") Long userId

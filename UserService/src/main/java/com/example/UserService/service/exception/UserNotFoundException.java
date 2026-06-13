@@ -1,10 +1,9 @@
 package com.example.UserService.service.exception;
 
-public class UserNotFoundException extends Exception {
+public class UserNotFoundException extends RuntimeException {
+    private static final String USER_NOT_FOUND_EXCEPTION_TEXT = "User  not found.";
 
-    private static final String USER_NOT_FOUND_EXCEPTION_TEXT = "User with login = %s not found.";
-
-    public UserNotFoundException(String username) {
-        super(String.format(USER_NOT_FOUND_EXCEPTION_TEXT, username));
+    public UserNotFoundException() {
+        super(String.format(USER_NOT_FOUND_EXCEPTION_TEXT));
     }
 }

@@ -26,7 +26,6 @@ public class TaskService {
 
     @Transactional
     public TaskDto createTask(CreateTaskDto dto) {
-        dto.setCreatedTime(LocalDateTime.now());
         Task savedTask = taskRepository.save(taskMapper.createTaskToTaskEntity(dto));
 
         return taskMapper.taskEntityToTaskDto(savedTask);

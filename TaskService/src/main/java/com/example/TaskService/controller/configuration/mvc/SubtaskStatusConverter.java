@@ -1,13 +1,11 @@
-package com.example.TaskService.controller.configuration;
+package com.example.TaskService.controller.configuration.mvc;
 
 import com.example.TaskService.controller.request.SubtaskStatusRequest;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SubtaskStatusConverter
-        implements Converter<String, SubtaskStatusRequest> {
-
+public class SubtaskStatusConverter implements Converter<String, SubtaskStatusRequest> {
     @Override
     public SubtaskStatusRequest convert(String source) {
 

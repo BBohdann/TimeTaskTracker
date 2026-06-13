@@ -1,6 +1,6 @@
 package com.example.TaskService.controller.controller;
 
-import com.example.TaskService.controller.configuration.jwt.JwtAuthentication;
+import com.example.TaskService.controller.configuration.mvc.CurrentUserId;
 import com.example.TaskService.controller.request.*;
 import com.example.TaskService.controller.response.SubtaskCreatedResponse;
 import com.example.TaskService.controller.response.SubtaskResponse;
@@ -15,7 +15,6 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -36,15 +35,15 @@ public class SubtaskController {
 
 //    @Operation(summary = "Create a new subtask", description = "Allows the user to create a new subtask under an existing task. The Authorization header should contain the Bearer token.")
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<SubtaskCreatedResponse> createSubtask(
             @PathVariable @Positive Long taskId,
-            @Valid @RequestBody CreateSubtaskRequest subtaskRequest) {
+            @Valid @RequestBody CreateSubtaskRequest subtaskRequest,
+            @CurrentUserId Long userId) {
         CreateSubtaskDto subtaskDto = subtaskMapper.subtaskRequestToCreateSubtaskDto(subtaskRequest);
 
         SubtaskDto saved = subtaskService.createSubtask(
                 taskId,
-                getUserIdFromAuth(),
+                userId,
                 subtaskDto
         );
 
@@ -55,29 +54,28 @@ public class SubtaskController {
 
 //    @Operation(summary = "Update time spent on a subtask", description = "Updates the time spent on a specific subtask. The Authorization header should contain the Bearer token.")
     @PatchMapping("/{subtaskId}/time-spent")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> updateSubtaskTimeSpent(
             @PathVariable @Positive Long taskId,
             @PathVariable @Positive Long subtaskId,
-            @Valid @RequestBody UpdateTimeSpentRequest taskRequest)  {
+            @Valid @RequestBody UpdateTimeSpentRequest taskRequest,
+            @CurrentUserId Long userId)  {
 
-        subtaskService.updateSubtaskTimeSpent(taskId, subtaskId, getUserIdFromAuth(), taskRequest.getTimeSpent());
-        return ResponseEntity
-                .status(HttpStatus.NO_CONTENT)
-                .build();
+        subtaskService.updateSubtaskTimeSpent(taskId, subtaskId, userId, taskRequest.getTimeSpent());
+
+        return ResponseEntity.noContent().build();
     }
 
 //    @Operation(summary = "Update subtask", description = "Allows the user to update information for an existing subtask. The Authorization header should contain the Bearer token.")
     @PatchMapping("/{subtaskId}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UpdatedSubtaskResponse> updateSubtask(
             @PathVariable @Positive Long taskId,
             @PathVariable @Positive Long subtaskId,
-            @Valid @RequestBody UpdateSubtaskRequest updateRequest) {
+            @Valid @RequestBody UpdateSubtaskRequest updateRequest,
+            @CurrentUserId Long userId) {
         SubtaskDto updatedSubtask = subtaskService.updateSubtask(
                 taskId,
                 subtaskId,
-                getUserIdFromAuth(),
+                userId,
                 subtaskMapper.updateSubtaskRequestToSubtaskDto(updateRequest)
         );
 
@@ -88,48 +86,43 @@ public class SubtaskController {
 
 //    @Operation(summary = "Delete a subtask", description = "Deletes a subtask by its ID. The Authorization header should contain the Bearer token.")
     @DeleteMapping("/{subtaskId}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteSubtask(
             @PathVariable @Positive Long taskId,
-            @PathVariable @Positive Long subtaskId) {
-        subtaskService.deleteSubtask(subtaskId, taskId, getUserIdFromAuth());
+            @PathVariable @Positive Long subtaskId,
+            @CurrentUserId Long userId) {
+        subtaskService.deleteSubtask(subtaskId, taskId, userId);
 
         return ResponseEntity.noContent().build();
     }
 
 //    @Operation(summary = "Get subtask by ID", description = "Fetches subtask information by its ID. The Authorization header should contain the Bearer token.")
     @GetMapping("/{subtaskId}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<SubtaskResponse> getSubtask(
             @PathVariable @Positive Long taskId,
-            @PathVariable @Positive Long subtaskId) {
+            @PathVariable @Positive Long subtaskId,
+            @CurrentUserId Long userId) {
         SubtaskDto subtask = subtaskService.getSubtaskById(
                 taskId,
                 subtaskId,
-                getUserIdFromAuth()
+                userId
         );
 
         return ResponseEntity.ok(subtaskMapper.subtaskDtoToResponse(subtask));
     }
 
     @GetMapping
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<SubtaskResponse>> getSubtasks(
             @PathVariable @Positive Long taskId,
-            @RequestParam SubtaskStatusRequest status) {
+            @RequestParam SubtaskStatusRequest status,
+            @CurrentUserId Long userId) {
         List<SubtaskDto> subtasks = subtaskService.getSubtasksByStatus(
                 taskId,
-                getUserIdFromAuth(),
+                userId,
                 status
         );
 
         return ResponseEntity.ok(
                 subtaskMapper.subtaskDtosToSubtaskResponses(subtasks)
         );
-    }
-
-    private Long getUserIdFromAuth() {
-        JwtAuthentication authentication = (JwtAuthentication) SecurityContextHolder.getContext().getAuthentication();
-        return Long.valueOf(authentication.getCredentials().toString());
     }
 }

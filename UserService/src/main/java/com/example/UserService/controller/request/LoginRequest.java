@@ -8,7 +8,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class LoginRequest {
-
     @NotBlank
     @Size(min = 3, max = 100)
     private String login;

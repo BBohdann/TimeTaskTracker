@@ -1,12 +1,11 @@
 package com.example.UserService.controller;
 
 import com.example.UserService.controller.configuration.jwt.TokenUtils;
-import com.example.UserService.controller.configuration.jwt.UserDetailsImpl;
-import com.example.UserService.controller.request.UpdateLoginRequest;
-import com.example.UserService.controller.request.UpdatePasswordRequest;
-import com.example.UserService.service.dto.UserInfoDto;
-import com.example.UserService.service.exception.UserIncorrectPasswordException;
-import com.example.UserService.service.exception.UserNotFoundException;
+import com.example.UserService.controller.configuration.mvc.CurrentUserId;
+import com.example.UserService.controller.request.*;
+import com.example.UserService.controller.responce.UserResponse;
+import com.example.UserService.service.dto.UserTokenData;
+import com.example.UserService.service.mapper.UserMapper;
 import com.example.UserService.service.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -16,89 +15,110 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @Validated
 @RestController
-@RequestMapping("api/user/")
+@RequestMapping("api/users")
 @RequiredArgsConstructor
 @Tag(name = "User", description = "Endpoints for managing user information")
 @SecurityRequirement(name = "Bearer Authentication")
 public class UserController {
-
     private final UserService userService;
     private final TokenUtils tokenUtils;
+    private final UserMapper userMapper;
 
-    @PostMapping("/updateLogin")
-    @PreAuthorize("isAuthenticated()")
+    @PatchMapping("/login")
     @Operation(
             summary = "Update user login",
             description = "Update the login of the authenticated user. Requires a valid JWT token in the Authorization header."
     )
-    public ResponseEntity<Void> updateUserLogin(@RequestBody @Valid UpdateLoginRequest request)
-            throws UserNotFoundException {
+    public ResponseEntity<Void> updateUserLogin(
+            @RequestBody @Valid UpdateLoginRequest request,
+            @CurrentUserId Long userId) {
+        UserTokenData updatedUser =
+                userService.updateLogin(
+                        userId,
+                        request.getNewLogin()
+                );
 
-        String currentLogin = tokenUtils.getLoginFromJwtToken(getCookieToken());
-        UserInfoDto updatedUser = userService.updateLogin(currentLogin, request.getNewLogin());
-
-        UserDetails userDetails = userService.loadUserByUsername(updatedUser.getLogin());
-        Authentication auth = new UsernamePasswordAuthenticationToken(userDetails, null);
-        SecurityContextHolder.getContext().setAuthentication(auth);
-
-        String newToken = tokenUtils.generateJwtToken(auth);
+        String token = tokenUtils.generateJwtToken(
+                updatedUser.getId(),
+                updatedUser.getLogin()
+        );
 
         return ResponseEntity.ok()
-                .header("Authorization", "Bearer " + newToken)
+                .header("Authorization", "Bearer " + token)
                 .build();
     }
 
-    @PostMapping("/updatePassword")
-    @PreAuthorize("isAuthenticated()")
+    @PatchMapping("/password")
     @Operation(
             summary = "Update user password",
             description = "Update the password of the authenticated user. Requires a valid JWT token in the Authorization header."
     )
-    public ResponseEntity<Void> updateUserPassword(@RequestBody @Valid UpdatePasswordRequest request)
-            throws UserNotFoundException, UserIncorrectPasswordException {
+    public ResponseEntity<Void> updateUserPassword(
+            @RequestBody @Valid UpdatePasswordRequest request,
+            @CurrentUserId Long userId) {
+        userService.updatePassword(
+                userMapper.updatePasswordRequestToDto(
+                        request,
+                        userId)
+        );
 
-        String login = tokenUtils.getLoginFromJwtToken(getCookieToken());
-
-        userService.updatePassword(login, request.getOldPassword(), request.getNewPassword());
-
-        return ResponseEntity.ok()
-                .header("Authorization", "Bearer " + getCookieToken())
-                .build();
+        return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/updateNickname")
-    @PreAuthorize("isAuthenticated()")
+    @PatchMapping("/nickname")
     @Operation(
             summary = "Update user nickname",
             description = "Update the nickname of the authenticated user. Requires a valid JWT token in the Authorization header."
     )
-    public ResponseEntity<Void> updateUserNickname(@RequestParam String newNickname)
-            throws UserNotFoundException {
+    public ResponseEntity<Void> updateUserNickname(
+            @RequestBody @Valid UpdateNicknameRequest request,
+            @CurrentUserId Long userId) {
+        userService.updateNickname(
+                userId,
+                request.getNewNickname()
+        );
 
-        String login = tokenUtils.getLoginFromJwtToken(getCookieToken());
-
-        userService.updateNickname(login, newNickname);
-
-        return ResponseEntity.ok()
-                .header("Authorization", "Bearer " + getCookieToken())
-                .build();
+        return ResponseEntity.noContent().build();
     }
 
-    private static String getCookieToken() {
-        return ((UserDetailsImpl) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal())
-                .getToken();
+    @PatchMapping("/email")
+    public ResponseEntity<Void> updateUserEmail(
+            @RequestBody @Valid UpdateEmailRequest request,
+            @CurrentUserId Long userId) {
+        userService.updateEmail(
+                userId,
+                request.getNewEmail()
+        );
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteUser(
+            @RequestBody @Valid DeleteUserRequest request,
+            @CurrentUserId Long userId) {
+        userService.deleteUser(
+                userId,
+                request.getPassword()
+        );
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getUser(
+            @CurrentUserId Long userId) {
+        UserResponse response = userMapper.userDtoToUserResponse(
+                userService.getUser(userId)
+        );
+
+        return ResponseEntity.ok(response);
     }
 }

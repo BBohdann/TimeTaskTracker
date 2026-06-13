@@ -72,7 +72,6 @@ public class TaskMapper {
 
     public Task createTaskToTaskEntity(CreateTaskDto createTaskDto){
         Task entity = new Task();
-        entity.setCreatedTime(createTaskDto.getCreatedTime());
         entity.setUserId(createTaskDto.getUserId());
         entity.setTaskName(createTaskDto.getTaskName());
         entity.setEndTime(createTaskDto.getEndTime());
