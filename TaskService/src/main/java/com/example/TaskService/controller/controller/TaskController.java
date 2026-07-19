@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import java.util.*;
+import java.util.List;
 
 @Validated
 @RestController

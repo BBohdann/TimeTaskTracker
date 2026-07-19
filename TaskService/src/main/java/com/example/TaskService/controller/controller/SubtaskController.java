@@ -9,7 +9,6 @@ import com.example.TaskService.controller.response.subtask.SubtaskResponse;
 import com.example.TaskService.controller.response.subtask.UpdatedSubtaskResponse;
 import com.example.TaskService.service.dto.subtask.CreateSubtaskDto;
 import com.example.TaskService.service.dto.subtask.SubtaskDto;
-import com.example.TaskService.service.dto.subtask.UpdateSubtaskDto;
 import com.example.TaskService.service.mapper.SubtaskMapper;
 import com.example.TaskService.service.service.SubtaskService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
