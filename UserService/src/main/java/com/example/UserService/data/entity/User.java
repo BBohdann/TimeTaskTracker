@@ -3,6 +3,7 @@ package com.example.UserService.data.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -23,9 +24,8 @@ public class User extends TimeBasedEntity{
     @Column(name = "login", nullable = false, unique = true)
     private String login;
 
-    @NotBlank
-    @Length(max = 100)
-    @Column(name = "password")
+    @Size(min = 4, max = 500)
+    @Column(length = 500)
     private String password;
 
     @NotBlank

@@ -18,7 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableMethodSecurity
 @RequiredArgsConstructor
-    public class SecurityConfig {
+public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final AuthHandler unauthorizedHandler;
     private final PasswordEncoder encoder;
@@ -43,13 +43,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
         http.csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth ->
-                        auth
-                                .requestMatchers("/api/users/**").authenticated()
-                                .anyRequest().permitAll()
-                );
-
-        http.addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/user-service/v3/api-docs/**",
+                                "/user-service/swagger-ui/**",
+                                "/user-service/swagger-ui.html",
+                                "/api/auth/**"
+                        ).permitAll()
+                        .requestMatchers("/api/users/**").authenticated()
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

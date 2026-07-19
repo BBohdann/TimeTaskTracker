@@ -1,20 +1,18 @@
 package com.example.TaskService.service.service;
 
-import com.example.TaskService.controller.request.TaskStatusRequest;
-import com.example.TaskService.controller.request.UpdateTaskRequest;
+import com.example.TaskService.controller.request.task.TaskStatusRequest;
 import com.example.TaskService.data.entity.Task;
 import com.example.TaskService.data.repository.TaskRepository;
-import com.example.TaskService.service.dto.CreateTaskDto;
-import com.example.TaskService.service.dto.TaskDto;
-import com.example.TaskService.service.dto.TaskWithSubtasksDto;
-import com.example.TaskService.service.dto.UpdateTaskDto;
+import com.example.TaskService.service.dto.task.CreateTaskDto;
+import com.example.TaskService.service.dto.task.TaskDto;
+import com.example.TaskService.service.dto.task.TaskWithSubtasksDto;
+import com.example.TaskService.service.dto.task.UpdateTaskDto;
 import com.example.TaskService.service.exception.TaskNotFoundException;
 import com.example.TaskService.service.mapper.TaskMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,30 +30,28 @@ public class TaskService {
     }
 
     @Transactional
-    public void updateTimeSpent(Long taskId, Integer timeSpent, Long userId) {
-        Task task = findTask(taskId, userId);
+    public void updateTimeSpent(Long taskId, Long userId, Integer timeSpent) {
+        if (timeSpent == null || timeSpent < 0) {
+            throw new IllegalArgumentException("timeSpent must be a non-negative number");
+        }
 
-        task.setTimeSpent(
-                task.getTimeSpent() + timeSpent
-        );
+        Task task = getTaskOrThrow(taskId, userId);
+        task.setTimeSpent(task.getTimeSpent() + timeSpent);
+
+        taskRepository.save(task);
     }
 
     @Transactional
     public TaskDto updateTask(Long taskId, UpdateTaskDto dto, Long userId) {
-        Task task = findTask(taskId, userId);
-
-        Optional.ofNullable(dto.getTaskName()).ifPresent(task::setTaskName);
-        Optional.ofNullable(dto.getDescription()).ifPresent(task::setDescription);
-        Optional.ofNullable(dto.getEndTime()).ifPresent(task::setEndTime);
-        Optional.ofNullable(dto.getIsComplete()).ifPresent(task::setIsComplete);
-        Optional.ofNullable(dto.getTimeToSpend()).ifPresent(task::setTimeToSpend);
+        Task task = getTaskOrThrow(taskId, userId);
+        taskMapper.updateTaskFromDto(dto, task);
 
         return taskMapper.taskEntityToTaskDto(task);
     }
 
     @Transactional(readOnly = true)
     public TaskWithSubtasksDto getTaskById(Long taskId, Long userId) {
-        return taskMapper.taskEntityToTaskWithSubtasksDto(findTask(taskId, userId));
+        return taskMapper.taskEntityToTaskWithSubtasksDto(getTaskOrThrow(taskId, userId));
     }
 
     @Transactional(readOnly = true)
@@ -69,17 +65,23 @@ public class TaskService {
                     taskRepository.findInactiveTasksByUserId(userId);
         };
 
-        return taskMapper.taskEntitiesToTaskWithSubtasksDtos(tasks);
+        return taskMapper.taskEntityToTaskWithSubtasksDto(tasks);
     }
 
     @Transactional
     public void deleteTask(Long id, Long userId) {
-        Task task = findTask(id, userId);
+        Task task = getTaskOrThrow(id, userId);
         taskRepository.delete(task);
     }
 
-    private Task findTask(Long taskId, Long userId) {
+    private Task getTaskOrThrow(Long taskId, Long userId) {
         return taskRepository.findByIdAndUserId(taskId, userId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
+    }
+
+    public void assertTaskExists(Long taskId, Long userId) {
+        if (!taskRepository.existsByIdAndUserId(taskId, userId)) {
+            throw new TaskNotFoundException(taskId);
+        }
     }
 }

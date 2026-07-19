@@ -1,157 +1,47 @@
 package com.example.TaskService.service.mapper;
 
-import com.example.TaskService.controller.request.CreateTaskRequest;
-import com.example.TaskService.controller.request.UpdateTaskRequest;
-import com.example.TaskService.controller.response.TaskCreatedResponse;
-import com.example.TaskService.controller.response.TaskResponse;
-import com.example.TaskService.controller.response.TaskUpdatedResponse;
+import com.example.TaskService.controller.request.task.CreateTaskRequest;
+import com.example.TaskService.controller.request.task.UpdateTaskRequest;
+import com.example.TaskService.controller.response.task.TaskCreatedResponse;
+import com.example.TaskService.controller.response.task.TaskResponse;
+import com.example.TaskService.controller.response.task.TaskUpdatedResponse;
 import com.example.TaskService.data.entity.Subtask;
 import com.example.TaskService.data.entity.Task;
-import com.example.TaskService.service.dto.*;
-import org.springframework.stereotype.Component;
-
+import com.example.TaskService.service.dto.task.*;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
-@Component
-public class TaskMapper {
-    public TaskWithSubtasksDto taskEntityToTaskWithSubtasksDto(Task entity){
-        TaskWithSubtasksDto dto = new TaskWithSubtasksDto();
-        dto.setId(entity.getId());
-        dto.setTaskName(entity.getTaskName());
-        dto.setCreatedTime(entity.getCreatedTime());
-        dto.setEndTime(entity.getEndTime());
-        dto.setDescription(entity.getDescription());
-        dto.setTimeToSpend(entity.getTimeToSpend());
-        dto.setTimeSpent(entity.getTimeSpent());
-        dto.setIsComplete(entity.getIsComplete());
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-        List<SubtaskMainInfoDto> subtasks = subtaskEntitiesToSubtaskMainInfoDtos(
-                Optional.ofNullable(entity.getSubtasks())
-                        .orElse(Collections.emptyList())
-        );
+@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+public interface TaskMapper {
+    TaskWithSubtasksDto taskEntityToTaskWithSubtasksDto(Task entity);
 
-        dto.setSubtasks(subtasks);
+    TaskDto taskEntityToTaskDto(Task entity);
 
-        return dto;
-    }
+    List<TaskWithSubtasksDto> taskEntityToTaskWithSubtasksDto(Collection<Task> entities);
 
-    public TaskDto taskEntityToTaskDto(Task entity) {
-        TaskDto dto = new TaskDto();
-        dto.setId(entity.getId());
-        dto.setTaskName(entity.getTaskName());
-        dto.setCreatedTime(entity.getCreatedTime());
-        dto.setEndTime(entity.getEndTime());
-        dto.setDescription(entity.getDescription());
-        dto.setTimeToSpend(entity.getTimeToSpend());
-        dto.setTimeSpent(entity.getTimeSpent());
-        dto.setIsComplete(entity.getIsComplete());
+    @Mapping(source = "taskRequest.taskName", target = "taskName")
+    @Mapping(source = "taskRequest.endTime", target = "endTime")
+    @Mapping(source = "taskRequest.description", target = "description")
+    @Mapping(source = "taskRequest.timeToSpend", target = "timeToSpend")
+    @Mapping(source = "userId", target = "userId")
+    CreateTaskDto taskRequestToCreateTaskDto(CreateTaskRequest taskRequest, Long userId);
 
-        return dto;
-    }
+    Task createTaskToTaskEntity(CreateTaskDto createTaskDto);
 
-    public List<TaskWithSubtasksDto> taskEntitiesToTaskWithSubtasksDtos(Collection<Task> entities) {
-        return entities.stream()
-                .map(this::taskEntityToTaskWithSubtasksDto)
-                .collect(Collectors.toList());
-    }
+    TaskCreatedResponse taskDtoToTaskCreatedResponse(TaskDto dto);
 
+    TaskUpdatedResponse taskDtoToTaskUpdatedResponse(TaskDto dto);
 
-    public CreateTaskDto taskRequestToCreateTaskDto(CreateTaskRequest taskRequest, Long userId){
-        CreateTaskDto dto = new CreateTaskDto();
-        dto.setTaskName(taskRequest.getTaskName());
-        dto.setEndTime(taskRequest.getEndTime());
-        dto.setDescription(taskRequest.getDescription());
-        dto.setTimeToSpend(taskRequest.getTimeToSpend());
-        dto.setUserId(userId);
-        return dto;
-    }
+    TaskResponse taskWithSubtasksDtoToTaskResponse(TaskWithSubtasksDto dto);
 
-    public Task createTaskToTaskEntity(CreateTaskDto createTaskDto){
-        Task entity = new Task();
-        entity.setUserId(createTaskDto.getUserId());
-        entity.setTaskName(createTaskDto.getTaskName());
-        entity.setEndTime(createTaskDto.getEndTime());
-        entity.setDescription(createTaskDto.getDescription());
-        entity.setTimeToSpend(createTaskDto.getTimeToSpend());
-        return entity;
-    }
+    UpdateTaskDto updateTaskRequestToUpdateTaskDto(UpdateTaskRequest request);
 
-    public TaskCreatedResponse taskDtoToTaskCreatedResponse(TaskDto dto) {
-        TaskCreatedResponse response = new TaskCreatedResponse();
-        response.setId(dto.getId());
-        response.setCreatedTime(dto.getCreatedTime());
-        return response;
-    }
+    List<TaskResponse> taskWithSubtaskDtoToTaskResponse(List<TaskWithSubtasksDto> dtos);
 
-    public TaskUpdatedResponse taskDtoToTaskUpdatedResponse(TaskDto dto) {
-        TaskUpdatedResponse response = new TaskUpdatedResponse();
-
-        response.setId(dto.getId());
-        response.setTaskName(dto.getTaskName());
-        response.setDescription(dto.getDescription());
-        response.setCreatedTime(dto.getCreatedTime());
-        response.setEndTime(dto.getEndTime());
-        response.setTimeToSpend(dto.getTimeToSpend());
-        response.setTimeSpent(dto.getTimeSpent());
-        response.setIsComplete(dto.getIsComplete());
-
-        return response;
-    }
-
-    public TaskResponse taskWithSubtasksDtoToTaskResponse(TaskWithSubtasksDto dto) {
-        TaskResponse response = new TaskResponse();
-
-        response.setId(dto.getId());
-        response.setTaskName(dto.getTaskName());
-        response.setDescription(dto.getDescription());
-        response.setCreatedTime(dto.getCreatedTime());
-        response.setEndTime(dto.getEndTime());
-        response.setTimeToSpend(dto.getTimeToSpend());
-        response.setTimeSpent(dto.getTimeSpent());
-        response.setIsComplete(dto.getIsComplete());
-        response.setSubtasks(dto.getSubtasks());
-
-        return response;
-    }
-
-    public UpdateTaskDto updateTaskRequestToUpdateTaskDto(UpdateTaskRequest request){
-        UpdateTaskDto dto = new UpdateTaskDto();
-
-        dto.setTaskName(request.getTaskName());
-        dto.setDescription(request.getDescription());
-        dto.setEndTime(request.getEndTime());
-        dto.setTimeToSpend(request.getTimeToSpend());
-        dto.setIsComplete(request.getIsComplete());
-
-        return dto;
-    }
-
-    public List<TaskResponse> taskWithSubtasksDtosToTaskResponses (List<TaskWithSubtasksDto> dtos){
-        return dtos.stream()
-                .map(this::taskWithSubtasksDtoToTaskResponse)
-                .toList();
-    }
-
-    private SubtaskMainInfoDto subtaskEntityToSubtaskMainInfoDto(Subtask entity) {
-        SubtaskMainInfoDto dto = new SubtaskMainInfoDto();
-
-        dto.setId(entity.getId());
-        dto.setSubtaskName(entity.getSubtaskName());
-        dto.setTimeSpent(entity.getTimeSpent());
-        dto.setTimeToSpent(entity.getTimeToSpend());
-        dto.setIsComplete(entity.getIsComplete());
-        dto.setEndTime(entity.getEndTime());
-
-        return dto;
-    }
-
-    private List<SubtaskMainInfoDto> subtaskEntitiesToSubtaskMainInfoDtos(List<Subtask> entities) {
-        return entities.stream()
-                .map(this::subtaskEntityToSubtaskMainInfoDto)
-                .toList();
-    }
+    void updateTaskFromDto(UpdateTaskDto dto, @MappingTarget Task task);
 }

@@ -1,0 +1,25 @@
+package com.example.TaskService.controller.request.subtask;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+
+@Data
+public class CreateSubtaskRequest {
+    @NotBlank
+    @Size(max = 255)
+    private String subtaskName;
+
+    @Size(max = 2000)
+    private String description;
+
+    private Instant endTime;
+
+    @Min(1)
+    private Integer timeToSpend;
+}

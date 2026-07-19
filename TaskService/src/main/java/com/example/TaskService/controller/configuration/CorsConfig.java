@@ -12,9 +12,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 @Configuration
-@RequiredArgsConstructor
 public class CorsConfig {
-    private final Config config;
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {
@@ -22,19 +20,14 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 String[] allowedIps = generateAllowedIps(101, 110);
-                String[] allowedOrigins = mergeAllowedOrigins(allowedIps);
+                String[] allowedOriginPatterns = mergeAllowedOriginPatterns(allowedIps);
 
                 registry.addMapping("/**")
-                        .allowedOrigins(allowedOrigins)
-                        .allowedMethods("GET", "POST")
+                        .allowedOriginPatterns(allowedOriginPatterns)
+                        .allowedMethods("GET", "POST", "PATCH", "DELETE")
                         .allowedHeaders("*")
-                        .exposedHeaders("Authorization")
+                        .exposedHeaders("Authorization", "Content-Security-Policy")
                         .allowCredentials(true);
-
-                registry.addMapping("/**")
-                        .allowedOrigins("*")
-                        .allowedMethods("*")
-                        .exposedHeaders("Content-Security-Policy");
             }
 
             private String[] generateAllowedIps(int start, int end) {
@@ -43,13 +36,10 @@ public class CorsConfig {
                         .toArray(String[]::new);
             }
 
-            private String[] mergeAllowedOrigins(String[] dynamicIps) {
-                List<String> origins = new ArrayList<>();
-                origins.addAll(Arrays.asList(dynamicIps));
-
+            private String[] mergeAllowedOriginPatterns(String[] dynamicIps) {
+                List<String> origins = new ArrayList<>(Arrays.asList(dynamicIps));
                 origins.add("https://*.netlify.app");
                 origins.add("https://*.github.io");
-
                 return origins.toArray(new String[0]);
             }
         };

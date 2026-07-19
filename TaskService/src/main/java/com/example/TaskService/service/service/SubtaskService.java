@@ -1,12 +1,13 @@
 package com.example.TaskService.service.service;
 
-import com.example.TaskService.controller.request.SubtaskStatusRequest;
+import com.example.TaskService.controller.request.subtask.SubtaskStatusRequest;
 import com.example.TaskService.data.entity.Subtask;
 import com.example.TaskService.data.entity.Task;
 import com.example.TaskService.data.repository.SubtaskRepository;
 import com.example.TaskService.data.repository.TaskRepository;
-import com.example.TaskService.service.dto.CreateSubtaskDto;
-import com.example.TaskService.service.dto.SubtaskDto;
+import com.example.TaskService.service.dto.subtask.CreateSubtaskDto;
+import com.example.TaskService.service.dto.subtask.SubtaskDto;
+import com.example.TaskService.service.dto.subtask.UpdateSubtaskDto;
 import com.example.TaskService.service.exception.SubtaskNotFoundException;
 import com.example.TaskService.service.exception.TaskNotFoundException;
 import com.example.TaskService.service.mapper.SubtaskMapper;
@@ -14,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,7 +56,7 @@ public class SubtaskService {
                     );
         };
 
-        return subtaskMapper.subtaskEntitiesToSubtaskDtos(subtasks);
+        return subtaskMapper.subtaskEntityToSubtaskDto(subtasks);
     }
 
     @Transactional
@@ -70,6 +70,10 @@ public class SubtaskService {
 
     @Transactional
     public void updateSubtaskTimeSpent(Long taskId, Long subtaskId, Long userId, Integer timeSpent) {
+        if (timeSpent == null || timeSpent < 0) {
+            throw new IllegalArgumentException("timeSpent must be a non-negative number");
+        }
+
         Subtask subtask = findOwnedSubtaskOrThrow(taskId, subtaskId, userId);
         subtask.setTimeSpent(subtask.getTimeSpent() + timeSpent);
 
@@ -78,14 +82,9 @@ public class SubtaskService {
     }
 
     @Transactional
-    public SubtaskDto updateSubtask(Long taskId, Long subtaskId, Long userId, SubtaskDto dto) {
+    public SubtaskDto updateSubtask(Long taskId, Long subtaskId, Long userId, UpdateSubtaskDto dto) {
         Subtask existing = findOwnedSubtaskOrThrow(taskId, subtaskId, userId);
-
-        Optional.ofNullable(dto.getSubtaskName()).ifPresent(existing::setSubtaskName);
-        Optional.ofNullable(dto.getDescription()).ifPresent(existing::setDescription);
-        Optional.ofNullable(dto.getEndTime()).ifPresent(existing::setEndTime);
-        Optional.ofNullable(dto.getTimeToSpend()).ifPresent(existing::setTimeToSpend);
-        Optional.ofNullable(dto.getIsComplete()).ifPresent(existing::setIsComplete);
+        subtaskMapper.updateSubtaskFromDto(dto, existing);
 
         return subtaskMapper.subtaskEntityToSubtaskDto(existing);
     }
@@ -93,22 +92,36 @@ public class SubtaskService {
     @Transactional
     public void deleteSubtask(Long subtaskId, Long taskId, Long userId) {
         Subtask subtask = findOwnedSubtaskOrThrow(taskId, subtaskId, userId);
+
+        decrementTaskTimeToSpend(subtask.getTask(), subtask.getTimeToSpend());
         subtaskRepository.delete(subtask);
     }
 
-    private Task findTaskOrThrow(Long taskId, Long userId) {
+    public Task findTaskOrThrow(Long taskId, Long userId) {
         return taskRepository
                 .findByIdAndUserId(taskId, userId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
     }
 
-    private Subtask findOwnedSubtaskOrThrow(Long taskId,
-            Long subtaskId,
-            Long userId) throws SubtaskNotFoundException {
-
+    public Subtask findOwnedSubtaskOrThrow(Long taskId, Long subtaskId, Long userId) {
         return subtaskRepository
                 .findOwnedSubtask(taskId, subtaskId, userId)
                 .orElseThrow(() ->
                         new SubtaskNotFoundException(subtaskId));
+    }
+
+    public void assertSubtaskExists(Long subtaskId, Long taskId, Long userId) {
+        if (!subtaskRepository.existsByIdAndTaskIdAndTaskUserId(subtaskId, taskId, userId)) {
+            throw new SubtaskNotFoundException(subtaskId);
+        }
+    }
+
+    private void decrementTaskTimeToSpend(Task task, Integer subtaskTimeToSpend) {
+        if (task.getTimeToSpend() == null || subtaskTimeToSpend == null) {
+            return;
+        }
+
+        task.setTimeToSpend(Math.max(task.getTimeToSpend() - subtaskTimeToSpend, 1));
+        taskRepository.save(task);
     }
 }

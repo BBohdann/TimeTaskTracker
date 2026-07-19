@@ -1,6 +1,6 @@
 package com.example.TaskService.controller.configuration.mvc;
 
-import com.example.TaskService.controller.request.TaskStatusRequest;
+import com.example.TaskService.controller.request.task.TaskStatusRequest;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 

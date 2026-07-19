@@ -1,7 +1,6 @@
 package com.example.UserService.controller.configuration.jwt;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,33 +34,30 @@ public class TokenFilter extends OncePerRequestFilter {
                 String login = claims.getSubject();
 
                 if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                    JwtAuthentication authentication =
-                            new JwtAuthentication(
-                                    id,
-                                    login
-                            );
+                    JwtAuthentication authentication = new JwtAuthentication(id, login);
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                    authentication.setDetails(
-                            new WebAuthenticationDetailsSource()
-                                    .buildDetails(request)
-                    );
-
-                    SecurityContextHolder.getContext()
-                            .setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
             filterChain.doFilter(request, response);
-        }
-        catch (JwtException ex) {
+        } catch (RuntimeException ex) {
             SecurityContextHolder.clearContext();
             authenticationEntryPoint.commence(
                     request,
                     response,
-                    new InsufficientAuthenticationException(
-                            "Invalid or expired token"
-                    )
+                    new InsufficientAuthenticationException("Invalid or expired token", ex)
             );
         }
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/user-service/swagger-ui")
+                || path.startsWith("/user-service/v3/api-docs")
+                || path.equals("/user-service/swagger-ui.html")
+                || path.startsWith("/api/auth");
     }
 
     private String resolveToken(HttpServletRequest request) {

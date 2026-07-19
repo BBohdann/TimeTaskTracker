@@ -11,21 +11,18 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 @Configuration
-@RequiredArgsConstructor
 public class CorsConfig {
-    private final Config config;
-
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 String[] allowedIps = generateAllowedIps(101, 110);
-                String[] allowedOrigins = mergeAllowedOrigins(allowedIps);
+                String[] allowedOriginPatterns = mergeAllowedOriginPatterns(allowedIps);
 
                 registry.addMapping("/**")
-                        .allowedOrigins(allowedOrigins)
-                        .allowedMethods("GET", "POST")
+                        .allowedOriginPatterns(allowedOriginPatterns)
+                        .allowedMethods("GET", "POST", "PATCH", "DELETE")
                         .allowedHeaders("*")
                         .exposedHeaders("Authorization")
                         .allowCredentials(true);
@@ -36,13 +33,8 @@ public class CorsConfig {
                         .mapToObj(i -> "http://192.168.0." + i + ":3000")
                         .toArray(String[]::new);
             }
-
-            private String[] mergeAllowedOrigins(String[] dynamicIps) {
-                List<String> origins = new ArrayList<>();
-                for (String ip : dynamicIps) {
-                    origins.add(ip);
-                }
-
+            private String[] mergeAllowedOriginPatterns(String[] dynamicIps) {
+                List<String> origins = new ArrayList<>(List.of(dynamicIps));
                 origins.add("https://*.netlify.app");
                 origins.add("https://*.github.io");
 

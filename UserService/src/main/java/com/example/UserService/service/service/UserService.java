@@ -2,21 +2,19 @@ package com.example.UserService.service.service;
 
 import com.example.UserService.data.entity.User;
 import com.example.UserService.data.repository.UserRepository;
+import com.example.UserService.service.exception.EmailAlreadyExistException;
+import com.example.UserService.service.exception.UserAlreadyExistException;
+import com.example.UserService.service.exception.UserIncorrectPasswordException;
+import com.example.UserService.service.exception.UserNotFoundException;
+import com.example.UserService.service.mapper.UserMapper;
 import com.example.UserService.service.dto.RegisterUserDto;
 import com.example.UserService.service.dto.UpdatePasswordDto;
 import com.example.UserService.service.dto.UserDto;
 import com.example.UserService.service.dto.UserTokenData;
-import com.example.UserService.service.exception.*;
-import com.example.UserService.service.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -90,7 +88,7 @@ public class UserService {
         User user = getUserOrThrow(dto.getId());
 
         if (!encoder.matches(dto.getOldPassword(), user.getPassword())) {
-            throw new UserIncorrectPasswordException(dto.getId().toString());
+            throw new UserIncorrectPasswordException(user.getLogin());
         }
 
         user.setPassword(

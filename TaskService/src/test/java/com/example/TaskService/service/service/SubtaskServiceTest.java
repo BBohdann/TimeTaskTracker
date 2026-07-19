@@ -1,219 +1,269 @@
 package com.example.TaskService.service.service;
 
+import com.example.TaskService.controller.request.subtask.SubtaskStatusRequest;
 import com.example.TaskService.data.entity.Subtask;
 import com.example.TaskService.data.entity.Task;
 import com.example.TaskService.data.repository.SubtaskRepository;
 import com.example.TaskService.data.repository.TaskRepository;
-import com.example.TaskService.service.dto.CreateSubtaskDto;
-import com.example.TaskService.service.dto.SubtaskDto;
+import com.example.TaskService.service.dto.subtask.CreateSubtaskDto;
+import com.example.TaskService.service.dto.subtask.SubtaskDto;
+import com.example.TaskService.service.dto.subtask.UpdateSubtaskDto;
 import com.example.TaskService.service.exception.SubtaskNotFoundException;
 import com.example.TaskService.service.exception.TaskNotFoundException;
 import com.example.TaskService.service.mapper.SubtaskMapper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class SubtaskServiceTest {
-    private SubtaskService subtaskService;
+    @Mock
     private SubtaskRepository subtaskRepository;
+
+    @Mock
     private SubtaskMapper subtaskMapper;
+
+    @Mock
     private TaskRepository taskRepository;
+
+    @InjectMocks
+    private SubtaskService subtaskService;
+
+    private static final Long USER_ID = 1L;
+    private static final Long TASK_ID = 10L;
+    private static final Long SUBTASK_ID = 100L;
+
+    private Task parentTask;
+    private Subtask existingSubtask;
 
     @BeforeEach
     void setUp() {
-        subtaskRepository = mock(SubtaskRepository.class);
-        taskRepository = mock(TaskRepository.class);
-        subtaskMapper = new SubtaskMapper();
-        subtaskService = new SubtaskService(subtaskRepository, subtaskMapper, taskRepository);
+        parentTask = new Task();
+        parentTask.setId(TASK_ID);
+        parentTask.setUserId(USER_ID);
+        parentTask.setTimeSpent(50);
+
+        existingSubtask = new Subtask();
+        existingSubtask.setId(SUBTASK_ID);
+        existingSubtask.setTask(parentTask);
+        existingSubtask.setSubtaskName("Original name");
+        existingSubtask.setDescription("Original description");
+        existingSubtask.setTimeSpent(5);
+        existingSubtask.setIsComplete(false);
     }
 
-    @Test
-    void getSubtasksByTaskId_Success() {
-        when(subtaskRepository.findByTaskId(1L)).thenReturn(List.of(new Subtask(), new Subtask()));
+    @Nested
+    class CreateSubtask {
 
-        List<Subtask> subtasks = subtaskService.getSubtasksByTaskId(1L);
+        @Test
+        void attachesParentTaskAndSaves() {
+            CreateSubtaskDto createDto = new CreateSubtaskDto();
+            createDto.setSubtaskName("New subtask");
 
-        assertEquals(2, subtasks.size());
-        verify(subtaskRepository).findByTaskId(1L);
+            Subtask newEntity = new Subtask();
+            Subtask savedEntity = new Subtask();
+            savedEntity.setId(SUBTASK_ID);
+            SubtaskDto expectedDto = new SubtaskDto();
+
+            when(taskRepository.findByIdAndUserId(TASK_ID, USER_ID)).thenReturn(Optional.of(parentTask));
+            when(subtaskMapper.createSubtaskDtoToEntity(createDto)).thenReturn(newEntity);
+            when(subtaskRepository.save(newEntity)).thenReturn(savedEntity);
+            when(subtaskMapper.subtaskEntityToSubtaskDto(savedEntity)).thenReturn(expectedDto);
+
+            SubtaskDto result = subtaskService.createSubtask(TASK_ID, USER_ID, createDto);
+
+            assertThat(newEntity.getTask()).isEqualTo(parentTask);
+            assertThat(result).isEqualTo(expectedDto);
+        }
+
+        @Test
+        void throwsTaskNotFoundWhenParentTaskMissing() {
+            when(taskRepository.findByIdAndUserId(TASK_ID, USER_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> subtaskService.createSubtask(TASK_ID, USER_ID, new CreateSubtaskDto()))
+                    .isInstanceOf(TaskNotFoundException.class);
+
+            verifyNoInteractions(subtaskRepository);
+        }
     }
 
-    @Test
-    void getSubtaskById_Success() throws SubtaskNotFoundException {
-        Task task = new Task();
-        task.setId(10L);
+    @Nested
+    class UpdateSubtaskTimeSpent {
 
-        Subtask subtask = new Subtask();
-        subtask.setId(1L);
-        subtask.setTask(task);
+        @Test
+        void incrementsBothSubtaskAndParentTaskTimeSpent() {
+            when(subtaskRepository.findOwnedSubtask(TASK_ID, SUBTASK_ID, USER_ID))
+                    .thenReturn(Optional.of(existingSubtask));
 
-        when(subtaskRepository.findById(1L)).thenReturn(Optional.of(subtask));
+            subtaskService.updateSubtaskTimeSpent(TASK_ID, SUBTASK_ID, USER_ID, 15);
 
-        SubtaskDto result = subtaskService.getSubtaskById(1L);
+            assertThat(existingSubtask.getTimeSpent()).isEqualTo(20);
+            assertThat(parentTask.getTimeSpent()).isEqualTo(65);
+        }
 
-        assertEquals(1L, result.getId());
-        assertEquals(10L, result.getTaskId());
+        @Test
+        void throwsWhenAdditionalTimeIsNull() {
+            assertThatThrownBy(() -> subtaskService.updateSubtaskTimeSpent(TASK_ID, SUBTASK_ID, USER_ID, null))
+                    .isInstanceOf(IllegalArgumentException.class);
 
-        verify(subtaskRepository).findById(1L);
+            verifyNoInteractions(subtaskRepository, taskRepository);
+        }
+
+        @Test
+        void throwsWhenAdditionalTimeIsNegative() {
+            assertThatThrownBy(() -> subtaskService.updateSubtaskTimeSpent(TASK_ID, SUBTASK_ID, USER_ID, -1))
+                    .isInstanceOf(IllegalArgumentException.class);
+
+            verifyNoInteractions(subtaskRepository, taskRepository);
+        }
+
+        @Test
+        void throwsSubtaskNotFoundWhenMissing() {
+            when(subtaskRepository.findOwnedSubtask(TASK_ID, SUBTASK_ID, USER_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> subtaskService.updateSubtaskTimeSpent(TASK_ID, SUBTASK_ID, USER_ID, 15))
+                    .isInstanceOf(SubtaskNotFoundException.class);
+
+            verify(taskRepository, never()).save(any());
+        }
     }
 
+    @Nested
+    class UpdateSubtask {
 
-    @Test
-    void getSubtaskById_NotFound() {
-        when(subtaskRepository.findById(1L)).thenReturn(Optional.empty());
+        @Test
+        void updatesOnlyProvidedFieldsAndSaves() {
+            UpdateSubtaskDto updateDto = new UpdateSubtaskDto();
+            updateDto.setSubtaskName("Updated name");
 
-        assertThrows(SubtaskNotFoundException.class, () -> subtaskService.getSubtaskById(1L));
+            when(subtaskRepository.findOwnedSubtask(TASK_ID, SUBTASK_ID, USER_ID))
+                    .thenReturn(Optional.of(existingSubtask));
 
-        verify(subtaskRepository).findById(1L);
+            doAnswer(invocation -> {
+                UpdateSubtaskDto source = invocation.getArgument(0);
+                Subtask target = invocation.getArgument(1);
+                Optional.ofNullable(source.getSubtaskName()).ifPresent(target::setSubtaskName);
+                Optional.ofNullable(source.getDescription()).ifPresent(target::setDescription);
+                Optional.ofNullable(source.getEndTime()).ifPresent(target::setEndTime);
+                Optional.ofNullable(source.getTimeToSpend()).ifPresent(target::setTimeToSpend);
+                Optional.ofNullable(source.getIsComplete()).ifPresent(target::setIsComplete);
+                return null;
+            }).when(subtaskMapper).updateSubtaskFromDto(any(UpdateSubtaskDto.class), any(Subtask.class));
+
+            SubtaskDto expectedDto = new SubtaskDto();
+            when(subtaskMapper.subtaskEntityToSubtaskDto(existingSubtask)).thenReturn(expectedDto);
+
+            SubtaskDto result = subtaskService.updateSubtask(TASK_ID, SUBTASK_ID, USER_ID, updateDto);
+
+            assertThat(existingSubtask.getSubtaskName()).isEqualTo("Updated name");
+            assertThat(existingSubtask.getDescription()).isEqualTo("Original description");
+            assertThat(result).isEqualTo(expectedDto);
+        }
+
+        @Test
+        void throwsSubtaskNotFoundWhenTaskDoesNotOwnSubtask() {
+            when(subtaskRepository.findOwnedSubtask(TASK_ID, SUBTASK_ID, USER_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> subtaskService.updateSubtask(TASK_ID, SUBTASK_ID, USER_ID, new UpdateSubtaskDto()))
+                    .isInstanceOf(SubtaskNotFoundException.class);
+
+            verify(subtaskRepository, never()).save(any());
+        }
     }
 
-    @Test
-    void addSubtask_Success() throws TaskNotFoundException {
-        CreateSubtaskDto dto = new CreateSubtaskDto();
-        dto.setTaskId(1L);
-        dto.setSubtaskName("Test Subtask");
+    @Nested
+    class GetSubtasksByStatus {
 
-        when(taskRepository.existsById(1L)).thenReturn(true);
-        when(subtaskRepository.save(any(Subtask.class))).thenAnswer(invocation -> {
-            Subtask savedSubtask = invocation.getArgument(0);
-            savedSubtask.setId(1L);
-            return savedSubtask;
-        });
+        @Test
+        void delegatesToActiveQuery() {
+            when(subtaskRepository.findActiveOwnedSubtasks(TASK_ID, USER_ID)).thenReturn(List.of(existingSubtask));
+            when(subtaskMapper.subtaskEntityToSubtaskDto(List.of(existingSubtask)))
+                    .thenReturn(List.of(new SubtaskDto()));
 
-        SubtaskDto result = subtaskService.addSubtask(dto);
+            List<SubtaskDto> result = subtaskService.getSubtasksByStatus(TASK_ID, USER_ID, SubtaskStatusRequest.ACTIVE);
 
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-        assertEquals(dto.getSubtaskName(), result.getSubtaskName());
-        assertNotNull(result.getCreatedTime());
+            assertThat(result).hasSize(1);
+            verify(subtaskRepository).findActiveOwnedSubtasks(TASK_ID, USER_ID);
+            verify(subtaskRepository, never()).findAllOwnedSubtasks(any(), any());
+            verify(subtaskRepository, never()).findInactiveOwnedSubtasks(any(), any());
+        }
 
-        verify(subtaskRepository).save(any(Subtask.class));
+        @Test
+        void delegatesToAllQuery() {
+            when(subtaskRepository.findAllOwnedSubtasks(TASK_ID, USER_ID)).thenReturn(List.of(existingSubtask));
+            when(subtaskMapper.subtaskEntityToSubtaskDto(List.of(existingSubtask)))
+                    .thenReturn(List.of(new SubtaskDto()));
+
+            subtaskService.getSubtasksByStatus(TASK_ID, USER_ID, SubtaskStatusRequest.ALL);
+
+            verify(subtaskRepository).findAllOwnedSubtasks(TASK_ID, USER_ID);
+        }
+
+        @Test
+        void delegatesToInactiveQuery() {
+            when(subtaskRepository.findInactiveOwnedSubtasks(TASK_ID, USER_ID)).thenReturn(List.of(existingSubtask));
+            when(subtaskMapper.subtaskEntityToSubtaskDto(List.of(existingSubtask)))
+                    .thenReturn(List.of(new SubtaskDto()));
+
+            subtaskService.getSubtasksByStatus(TASK_ID, USER_ID, SubtaskStatusRequest.INACTIVE);
+
+            verify(subtaskRepository).findInactiveOwnedSubtasks(TASK_ID, USER_ID);
+        }
     }
 
-    @Test
-    void addSubtask_TaskNotFound() {
-        CreateSubtaskDto dto = new CreateSubtaskDto();
-        dto.setTaskId(1L);
+    @Nested
+    class DeleteSubtask {
 
-        when(taskRepository.existsById(1L)).thenReturn(false);
+        @Test
+        void deletesWhenOwned() {
+            when(subtaskRepository.findOwnedSubtask(TASK_ID, SUBTASK_ID, USER_ID))
+                    .thenReturn(Optional.of(existingSubtask));
 
-        assertThrows(TaskNotFoundException.class, () -> subtaskService.addSubtask(dto));
+            subtaskService.deleteSubtask(SUBTASK_ID, TASK_ID, USER_ID);
 
-        verify(subtaskRepository, never()).save(any(Subtask.class));
+            verify(subtaskRepository).delete(existingSubtask);
+        }
+
+        @Test
+        void throwsAndDoesNotDeleteWhenNotOwned() {
+            when(subtaskRepository.findOwnedSubtask(TASK_ID, SUBTASK_ID, USER_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> subtaskService.deleteSubtask(SUBTASK_ID, TASK_ID, USER_ID))
+                    .isInstanceOf(SubtaskNotFoundException.class);
+
+            verify(subtaskRepository, never()).delete(any());
+        }
     }
 
-    @Test
-    void updateSubtaskTimeSpent_Success() throws SubtaskNotFoundException, TaskNotFoundException {
-        SubtaskDto dto = new SubtaskDto();
-        dto.setId(1L);
-        dto.setTaskId(1L);
-        dto.setTimeSpent(5);
+    @Nested
+    class FindHelpers {
 
-        when(subtaskRepository.existsById(1L)).thenReturn(true);
-        when(subtaskRepository.findById(1L)).thenReturn(Optional.of(new Subtask()));
-        when(subtaskRepository.findTaskIdBySubtaskId(1L)).thenReturn(Optional.of(1L));
+        @Test
+        void findTaskOrThrowReturnsTask() {
+            when(taskRepository.findByIdAndUserId(TASK_ID, USER_ID)).thenReturn(Optional.of(parentTask));
 
-        subtaskService.updateSubtaskTimeSpent(dto);
+            Task result = subtaskService.findTaskOrThrow(TASK_ID, USER_ID);
 
-        verify(subtaskRepository).updateTimeSpent(1L, 5);
-        verify(taskRepository).updateTimeSpent(1L, 5);
-    }
+            assertThat(result).isEqualTo(parentTask);
+        }
 
-    @Test
-    void updateSubtaskTimeSpent_SubtaskNotFound() {
-        SubtaskDto dto = new SubtaskDto();
-        dto.setId(1L);
+        @Test
+        void findOwnedSubtaskOrThrowThrowsWhenMissing() {
+            when(subtaskRepository.findOwnedSubtask(TASK_ID, SUBTASK_ID, USER_ID)).thenReturn(Optional.empty());
 
-        when(subtaskRepository.existsById(1L)).thenReturn(false);
-
-        assertThrows(SubtaskNotFoundException.class, () -> subtaskService.updateSubtaskTimeSpent(dto));
-
-        verify(subtaskRepository, never()).updateTimeSpent(anyLong(), anyInt());
-        verify(taskRepository, never()).updateTimeSpent(anyLong(), anyInt());
-    }
-
-    @Test
-    void updateSubtaskTimeSpent_TaskNotFound() {
-        SubtaskDto dto = new SubtaskDto();
-        dto.setId(1L);
-        dto.setTaskId(999L);
-        dto.setTimeSpent(5);
-
-        when(subtaskRepository.existsById(1L)).thenReturn(true);
-        when(subtaskRepository.findTaskIdBySubtaskId(1L)).thenReturn(Optional.empty());
-
-        assertThrows(SubtaskNotFoundException.class, () -> subtaskService.updateSubtaskTimeSpent(dto));
-    }
-
-    @Test
-    void changeIsCompleteFlag_Success() throws SubtaskNotFoundException {
-        when(subtaskRepository.changeIsCompleteFlag(1L)).thenReturn(1);
-
-        subtaskService.changeIsCompleteFlag(1L);
-
-        verify(subtaskRepository).changeIsCompleteFlag(1L);
-    }
-
-    @Test
-    void changeIsCompleteFlag_SubtaskNotFound() {
-        when(subtaskRepository.changeIsCompleteFlag(1L)).thenReturn(0);
-
-        assertThrows(SubtaskNotFoundException.class, () -> subtaskService.changeIsCompleteFlag(1L));
-
-        verify(subtaskRepository).changeIsCompleteFlag(1L);
-    }
-
-    @Test
-    void updateSubtask_Success() throws TaskNotFoundException, SubtaskNotFoundException {
-        SubtaskDto dto = new SubtaskDto();
-        dto.setId(1L);
-        dto.setSubtaskName("Updated Subtask");
-        dto.setDescription("Updated Description");
-
-        Subtask existingSubtask = new Subtask();
-        existingSubtask.setId(dto.getId());
-
-        when(subtaskRepository.findById(1L)).thenReturn(Optional.of(existingSubtask));
-        when(subtaskRepository.save(any(Subtask.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        subtaskService.updateSubtask(dto);
-
-        assertEquals(dto.getSubtaskName(), existingSubtask.getSubtaskName());
-        assertEquals(dto.getDescription(), existingSubtask.getDescription());
-        verify(subtaskRepository).save(existingSubtask);
-    }
-
-    @Test
-    void updateSubtask_SubtaskNotFound() {
-        SubtaskDto dto = new SubtaskDto();
-        dto.setId(1L);
-
-        when(subtaskRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(SubtaskNotFoundException.class, () -> subtaskService.updateSubtask(dto));
-
-        verify(subtaskRepository, never()).save(any(Subtask.class));
-    }
-
-    @Test
-    void deleteSubtask_Success() throws SubtaskNotFoundException {
-        when(subtaskRepository.existsById(1L)).thenReturn(true);
-        when(subtaskRepository.findById(1L)).thenReturn(Optional.of(new Subtask()));
-
-        subtaskService.deleteSubtask(1L);
-
-        verify(subtaskRepository).deleteById(1L);
-    }
-
-    @Test
-    void deleteSubtask_SubtaskNotFound() {
-        when(subtaskRepository.existsById(1L)).thenReturn(false);
-
-        assertThrows(SubtaskNotFoundException.class, () -> subtaskService.deleteSubtask(1L));
-
-        verify(subtaskRepository, never()).deleteById(anyLong());
+            assertThatThrownBy(() -> subtaskService.findOwnedSubtaskOrThrow(TASK_ID, SUBTASK_ID, USER_ID))
+                    .isInstanceOf(SubtaskNotFoundException.class);
+        }
     }
 }

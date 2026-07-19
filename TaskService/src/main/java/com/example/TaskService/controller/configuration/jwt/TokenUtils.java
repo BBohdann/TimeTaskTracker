@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class TokenUtils {

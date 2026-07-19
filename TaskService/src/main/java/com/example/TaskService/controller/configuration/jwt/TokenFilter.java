@@ -17,7 +17,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class TokenFilter extends OncePerRequestFilter {
@@ -45,21 +44,25 @@ public class TokenFilter extends OncePerRequestFilter {
                             );
                 }
             }
-        }
-        catch (JwtException ex) {
+        } catch (RuntimeException ex) {
             SecurityContextHolder.clearContext();
-
             authenticationEntryPoint.commence(
                     request,
                     response,
-                    new InsufficientAuthenticationException(
-                            "Invalid or expired token"
-                    )
+                    new InsufficientAuthenticationException("Invalid or expired token", ex)
             );
-
             return;
         }
             filterChain.doFilter(request, response);
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+
+        return path.startsWith("/task-service/swagger-ui")
+                || path.startsWith("/task-service/v3/api-docs")
+                || path.equals("/task-service/swagger-ui.html");
     }
 
     private String resolveToken(HttpServletRequest request) {

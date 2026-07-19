@@ -3,7 +3,6 @@ package com.example.UserService.service.dto;
 import lombok.Data;
 
 import java.time.Instant;
-import java.time.LocalDate;
 
 @Data
 public class UserDto {

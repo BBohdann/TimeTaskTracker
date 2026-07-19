@@ -3,6 +3,7 @@ package com.example.UserService.controller.configuration.mvc;
 import com.example.UserService.controller.configuration.jwt.JwtAuthentication;
 import com.example.UserService.controller.configuration.jwt.UserDetailsImpl;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -23,17 +24,12 @@ public class CurrentUserIdResolver implements HandlerMethodArgumentResolver {
                                   ModelAndViewContainer mavContainer,
                                   NativeWebRequest webRequest,
                                   WebDataBinderFactory binderFactory) {
-        Authentication authentication  =
-                        SecurityContextHolder
-                                .getContext()
-                                .getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication instanceof JwtAuthentication jwt) {
             return jwt.getUserId();
         }
 
-        throw new IllegalStateException(
-                "Current user is not authenticated"
-        );
+        throw new InsufficientAuthenticationException("Current user is not authenticated");
     }
 }

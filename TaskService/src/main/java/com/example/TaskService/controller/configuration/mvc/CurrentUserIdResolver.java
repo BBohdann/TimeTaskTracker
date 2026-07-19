@@ -3,6 +3,8 @@ package com.example.TaskService.controller.configuration.mvc;
 import com.example.TaskService.controller.configuration.jwt.JwtAuthentication;
 import com.example.TaskService.controller.configuration.mvc.CurrentUserId;
 import org.springframework.core.MethodParameter;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -22,12 +24,12 @@ public class CurrentUserIdResolver implements HandlerMethodArgumentResolver {
                                   ModelAndViewContainer mavContainer,
                                   NativeWebRequest webRequest,
                                   WebDataBinderFactory binderFactory) {
-        JwtAuthentication auth =
-                (JwtAuthentication)
-                        SecurityContextHolder
-                                .getContext()
-                                .getAuthentication();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        return auth.getUserId();
+        if (!(auth instanceof JwtAuthentication jwtAuthentication)) {
+            throw new InsufficientAuthenticationException("Authentication is required");
+        }
+
+        return jwtAuthentication.getUserId();
     }
 }
