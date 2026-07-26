@@ -1,9 +1,10 @@
 # Git ignore file
 
+.env
+build/
+.gradle/
+*.iml
 .idea/
-TaskService.iml
-TimeTaskTracker.iml
-UserService.iml
 
 *.log
 *.DS_Store

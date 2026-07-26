@@ -1,4 +1,18 @@
-FROM openjdk:21-jdk-slim
-VOLUME /tmp
-COPY build/libs/UserService-0.1.jar app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+FROM eclipse-temurin:21-jdk-alpine AS build
+WORKDIR /app
+
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle settings.gradle ./
+RUN sed -i 's/\r$//' gradlew
+RUN chmod +x gradlew
+RUN ./gradlew dependencies --no-daemon || true
+
+COPY src src
+RUN ./gradlew bootJar --no-daemon -x test
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/build/libs/app.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
