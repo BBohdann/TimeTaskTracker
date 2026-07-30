@@ -1,50 +1,3 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: task-service
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: task-service
-  template:
-    metadata:
-      labels:
-        app: task-service
-    spec:
-      containers:
-        - name: task-service
-          image: bbohdann/task-service-app:1.6
-          ports:
-            - containerPort: 8081
-          env:
-            - name: JWT_SECRET
-              value: "===================================MySecretKey==============================================="
-            - name: PASSWORD_POSTGRES
-              value: "Db-123456"
-            - name: URL_POSTGRES
-              value: "jdbc:postgresql://34.88.53.56:5432/taskservicedb"
-            - name: USERNAME_POSTGRES
-              value: "postgres"
-      tolerations:
-        - key: node-role.kubernetes.io/control-plane
-          operator: Exists
-          effect: NoSchedule
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: task-service
-spec:
-  selector:
-    app: task-service
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8081
-
----
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -53,9 +6,9 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://*.netlify.app, https://*.github.io"
-    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PATCH, DELETE"
     nginx.ingress.kubernetes.io/cors-allow-headers: "*"
-    nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length, Content-Range, Authorization"
+    nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Length, Content-Range, Authorization, Content-Security-Policy"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
 spec:
   ingressClassName: nginx
@@ -75,6 +28,13 @@ spec:
                 port:
                   number: 80
           - path: /api/task
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: task-service
+                port:
+                  number: 80
+          - path: /api/session
             pathType: ImplementationSpecific
             backend:
               service:

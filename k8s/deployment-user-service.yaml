@@ -14,20 +14,12 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: bbohdann/user-service-app:1.8
+          image: bbohdann/user-service-app:latest
           ports:
             - containerPort: 8080
-          env:
-            - name: JWT_EXPIRATION
-              value: "31536000000"
-            - name: JWT_SECRET
-              value: "===================================MySecretKey==============================================="
-            - name: PASSWORD_POSTGRES
-              value: "Db-123456"
-            - name: URL_POSTGRES
-              value: "jdbc:postgresql://34.88.53.56:5432/userservicedb"
-            - name: USERNAME_POSTGRES
-              value: "postgres"
+          envFrom:
+            - secretRef:
+                name: user-service-secrets
       tolerations:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
