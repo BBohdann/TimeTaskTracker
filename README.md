@@ -1,3 +1,4 @@
+![CI Status](https://github.com/BBohdann/TimeTaskTracker/actions/workflows/ci.yml/badge.svg)
 # TimeTaskTracker
  
 TimeTaskTracker is a backend application for managing users, tasks, and subtasks.
