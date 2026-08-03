@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
+permissions:
+  contents: write
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -31,3 +34,23 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew check
+
+      - name: Generate coverage badge (User Service)
+        uses: cicirello/jacoco-badge-generator@v2
+        with:
+          jacoco-csv-file: UserService/build/reports/jacoco/test/jacocoTestReport.csv
+          badges-directory: badges
+          coverage-badge-filename: jacoco-user-service.svg
+
+      - name: Generate coverage badge (Task Service)
+        uses: cicirello/jacoco-badge-generator@v2
+        with:
+          jacoco-csv-file: TaskService/build/reports/jacoco/test/jacocoTestReport.csv
+          badges-directory: badges
+          coverage-badge-filename: jacoco-task-service.svg
+
+      - name: Commit updated badges
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update coverage badges [skip ci]"
+          file_pattern: badges/*.svg
