@@ -1,6 +1,6 @@
 ![CI](https://github.com/BBohdann/TimeTaskTracker/actions/workflows/ci.yml/badge.svg)
-![User Service Coverage](badges/jacoco-user-service.svg)
 ![Task Service Coverage](badges/jacoco-task-service.svg)
+![User Service Coverage](badges/jacoco-user-service.svg)
 
 # TimeTaskTracker
  
