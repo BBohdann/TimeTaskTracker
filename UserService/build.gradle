@@ -71,4 +71,18 @@ jacocoTestReport {
         html.required = true
         csv.required = true
     }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/dto/**',
+                    '**/request/**',
+                    '**/response/**',
+                    '**/entity/**',
+                    '**/mvc/**',
+                    '**/*Application.class',
+                    '**/exception/**',
+                    '**/mapper/**'
+            ])
+        }))
+    }
 }

@@ -41,6 +41,7 @@ jobs:
           jacoco-csv-file: UserService/build/reports/jacoco/test/jacocoTestReport.csv
           badges-directory: badges
           coverage-badge-filename: jacoco-user-service.svg
+          coverage-label: User Service Coverage
 
       - name: Generate coverage badge (Task Service)
         uses: cicirello/jacoco-badge-generator@v2
@@ -48,6 +49,7 @@ jobs:
           jacoco-csv-file: TaskService/build/reports/jacoco/test/jacocoTestReport.csv
           badges-directory: badges
           coverage-badge-filename: jacoco-task-service.svg
+          coverage-label: Task Service Coverage
 
       - name: Commit updated badges
         uses: stefanzweifel/git-auto-commit-action@v5
